@@ -9,8 +9,18 @@ from PIL import Image
 
 SHRINK_FACTOR = 5
 
+# TODO: Use fact that gaussian kernels separable for more efficient processing
 # Stolen straight from the lecture notes ;)
-BLUR_KERNEL = np.array([[1,2,1], [2,4,2], [1,2,1]])/12
+BLUR_KERNEL_SMALL = np.array([[1,2,1], [2,4,2], [1,2,1]])/16
+BLUR_KERNEL_LARGE = np.array(
+        [
+            [1,3,5,3,1],
+            [3,14,23,14,3],
+            [5,23,38,23,25],
+            [3,14,23,14,3],
+            [1,3,5,3,1],
+        ]
+) / 234
 
 def main():
     if len(sys.argv) != 4:
@@ -27,7 +37,7 @@ def main():
             if operation == 'resize':
                 out_pixels = shrink(pixels, SHRINK_FACTOR, get_nearest_neighbour)
             elif operation == 'blur':
-                out_pixels = convolute_2D(pixels, BLUR_KERNEL)
+                out_pixels = convolute_2D(pixels, BLUR_KERNEL_SMALL)
             elif operation == 'edge':
                 print("Not yet implemented")
                 out_pixels = pixels
@@ -57,18 +67,10 @@ def convolute_2D(pixels, kernel):
 
     output = np.zeros(pixels.shape, dtype=np.uint8)
 
-    # TODO
-    pad_width = 1
+    # With an nxn kernel, the middle field is for the pixel itself, so we need
+    # floor(n/2) padding on each side.
+    pad_width = int(kernel_width / 2)
     padded = edge_pad_2D(pixels, pad_width)
-
-    red = padded[:, :, 0]
-    blue = padded[:, :, 1]
-    green = padded[:, :, 2]
-    # print("Input red:\n{}\nPadded red:\n{}".format(repr(pixels[:, :, 0]), repr(padded[:, :, 0])))
-
-    print("Input shape: {}, Kernel shape: {}, Padded: {}".format(pixels.shape, kernel.shape, padded.shape))
-    print("Kernel:\n {}".format(kernel))
-
 
     # TODO should be able to use np.fromfunction or similar here
     for y in range(0, input_height):
@@ -85,7 +87,6 @@ def convolute_2D(pixels, kernel):
                 # the entries up.
                 output[y, x, ch] = (kernel * window[:, :, ch]).sum()
 
-    print("Output shape: {}".format(output.shape))
     return output
 
 # Takes a (height, width, 3) array representing an RGB image, and
