@@ -27,6 +27,9 @@ BLUR_KERNEL_LARGE = np.array(
         ]
 ) / 234
 
+SOBEL_KERNEL_X = np.array([[1, 0, -1], [2, 0, -2], [1, 0, -1]])
+SOBEL_KERNEL_Y = np.array([[1, 2, 1], [0, 0, 0], [-1, -2, -1]])
+
 
 def main():
     if len(sys.argv) != 4:
@@ -45,8 +48,15 @@ def main():
             elif operation == 'blur':
                 out_pixels = convolute_2D(pixels, BLUR_KERNEL_LARGE)
             elif operation == 'edge':
-                print("Not yet implemented")
-                out_pixels = pixels
+                # Need to ensure we can square without overflowing
+                out_x = convolute_2D(pixels, SOBEL_KERNEL_X).astype(np.uint16)
+                out_y = convolute_2D(pixels, SOBEL_KERNEL_Y).astype(np.uint16)
+                # And after the square root we truncate back to uint8.
+                out_pixels = np.sqrt(np.square(out_x) + np.square(out_y)).astype(np.uint8)
+            elif operation == 'edge_x':
+                out_pixels = convolute_2D(pixels, SOBEL_KERNEL_X)
+            elif operation == 'edge_y':
+                out_pixels = convolute_2D(pixels, SOBEL_KERNEL_Y)
             else:
                 usage()
 
@@ -169,7 +179,7 @@ def shrink(pixels, factor, sampling_function):
 
 
 def usage():
-    print ("Usage: process.py <resize|blur|edge> <input_file> <output_file>")
+    print ("Usage: process.py <resize|blur|edge|edge_x|edge_y> <input_file> <output_file>")
     sys.exit(1)
 
 if __name__ == '__main__':
