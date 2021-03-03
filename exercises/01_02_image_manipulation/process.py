@@ -11,16 +11,22 @@ SHRINK_FACTOR = 5
 
 # TODO: Use fact that gaussian kernels separable for more efficient processing
 # Stolen straight from the lecture notes ;)
+BLUR_KERNEL_SMALL_X = np.array([[1, 2, 1]]) / 16
+BLUR_KERNEL_SMALL_Y = np.array([[1], [2], [1]])
 BLUR_KERNEL_SMALL = np.array([[1,2,1], [2,4,2], [1,2,1]])/16
+
+BLUR_KERNEL_LARGE_X = np.array([[0.834,3.739,6.164,3.739,0.834]]) / 234
+BLUR_KERNEL_LARGE_Y = np.array([[0.834],[3.739],[6.164],[3.3739],[0.834]])
 BLUR_KERNEL_LARGE = np.array(
         [
             [1,3,5,3,1],
             [3,14,23,14,3],
-            [5,23,38,23,25],
+            [5,23,38,23,5],
             [3,14,23,14,3],
             [1,3,5,3,1],
         ]
 ) / 234
+
 
 def main():
     if len(sys.argv) != 4:
@@ -37,7 +43,7 @@ def main():
             if operation == 'resize':
                 out_pixels = shrink(pixels, SHRINK_FACTOR, get_nearest_neighbour)
             elif operation == 'blur':
-                out_pixels = convolute_2D(pixels, BLUR_KERNEL_SMALL)
+                out_pixels = convolute_2D(pixels, BLUR_KERNEL_LARGE)
             elif operation == 'edge':
                 print("Not yet implemented")
                 out_pixels = pixels
