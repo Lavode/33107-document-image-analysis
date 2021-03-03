@@ -1,4 +1,3 @@
 slides/*.pdf
 exercises/**/*.pdf
-exercises/**/*.jpg
-exercises/**/*.png
+exercises/**/images/*
