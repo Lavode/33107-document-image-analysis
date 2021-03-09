@@ -5,18 +5,11 @@ import sys
 
 import numpy as np
 
-from PIL import Image
+import cv2
 
 SHRINK_FACTOR = 5
 
-# TODO: Use fact that gaussian kernels separable for more efficient processing
-# Stolen straight from the lecture notes ;)
-BLUR_KERNEL_SMALL_X = np.array([[1, 2, 1]]) / 16
-BLUR_KERNEL_SMALL_Y = np.array([[1], [2], [1]])
 BLUR_KERNEL_SMALL = np.array([[1,2,1], [2,4,2], [1,2,1]])/16
-
-BLUR_KERNEL_LARGE_X = np.array([[0.834,3.739,6.164,3.739,0.834]]) / 234
-BLUR_KERNEL_LARGE_Y = np.array([[0.834],[3.739],[6.164],[3.3739],[0.834]])
 BLUR_KERNEL_LARGE = np.array(
         [
             [1,3,5,3,1],
@@ -27,9 +20,7 @@ BLUR_KERNEL_LARGE = np.array(
         ]
 ) / 234
 
-SOBEL_KERNEL_X = np.array([[1, 0, -1], [2, 0, -2], [1, 0, -1]])
-SOBEL_KERNEL_Y = np.array([[1, 2, 1], [0, 0, 0], [-1, -2, -1]])
-
+EDGE_KERNEL = np.array([[-1, -1, -1], [-1, 8, -1], [-1, -1, -1]]) / 100
 
 def main():
     if len(sys.argv) != 4:
@@ -39,40 +30,41 @@ def main():
     input_file = sys.argv[2]
     output_file = sys.argv[3]
 
-    try:
-        with Image.open(input_file) as img:
-            pixels = image_to_pixels(img)
+    if operation == 'resize':
+        pixels = load_pixels(input_file)
+        out_pixels = shrink(pixels, SHRINK_FACTOR, get_nearest_neighbour)
 
-            if operation == 'resize':
-                out_pixels = shrink(pixels, SHRINK_FACTOR, get_nearest_neighbour)
-            elif operation == 'blur':
-                out_pixels = convolute_2D(pixels, BLUR_KERNEL_LARGE)
-            elif operation == 'edge':
-                # Need to ensure we can square without overflowing
-                out_x = convolute_2D(pixels, SOBEL_KERNEL_X).astype(np.uint16)
-                out_y = convolute_2D(pixels, SOBEL_KERNEL_Y).astype(np.uint16)
-                # And after the square root we truncate back to uint8.
-                out_pixels = np.sqrt(np.square(out_x) + np.square(out_y)).astype(np.uint8)
-            elif operation == 'edge_x':
-                out_pixels = convolute_2D(pixels, SOBEL_KERNEL_X)
-            elif operation == 'edge_y':
-                out_pixels = convolute_2D(pixels, SOBEL_KERNEL_Y)
-            else:
-                usage()
+    elif operation == 'blur':
+        pixels = load_pixels(input_file)
+        out_pixels = convolute_2D(pixels, BLUR_KERNEL_LARGE)
 
-            out_img = pixels_to_image(out_pixels)
-            out_img.save(output_file)
+    elif operation == 'edge':
+        pixels = load_pixels(input_file, rgb=False)
+        out_pixels = convolute_2D(pixels, EDGE_KERNEL)
 
-    except OSError as e:
-        print("Error: {}".format(e))
+    else:
+        usage()
 
-# Convert (height * width) Pillow image into a (height, width, 3) numpy array.
-def image_to_pixels(img):
-    return np.array(img)
+    write_pixels(output_file, out_pixels)
 
-# Convert numpy (height, width, 3) array into (height * width) Pillow image
-def pixels_to_image(pixels):
-    return Image.fromarray(pixels)
+def load_pixels(img_path, rgb=True):
+    if rgb:
+        img = cv2.imread(img_path)
+        # Default is BGR
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    else:
+        img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+
+    if img is None:
+        raise RuntimeError("Unable to load image: {}".format(img_path))
+
+    return img
+
+
+def write_pixels(img_path, out_pixels):
+    # Must write BGR
+    pixels_bgr = cv2.cvtColor(out_pixels, cv2.COLOR_RGB2BGR)
+    cv2.imwrite(img_path, pixels_bgr)
 
 def convolute_2D(pixels, kernel):
     input_height = pixels.shape[0]
@@ -85,7 +77,7 @@ def convolute_2D(pixels, kernel):
 
     # With an nxn kernel, the middle field is for the pixel itself, so we need
     # floor(n/2) padding on each side.
-    pad_width = int(kernel_width / 2)
+    pad_width = max(int(kernel_width / 2), int(kernel_height / 2))
     padded = edge_pad_2D(pixels, pad_width)
 
     # TODO should be able to use np.fromfunction or similar here
@@ -96,12 +88,15 @@ def convolute_2D(pixels, kernel):
             # pixel, we subtract `pad_width` again, so it cancels out.
             window = padded[y : y + kernel_height, x : x + kernel_width]
 
-            # Treat R, G, B separately
-            for ch in range(3):
-                # We want component-wise multiplication of kernel and (sub)-matrix of the
-                # image, so use np.multiply (which is what the * operator does), then sum
-                # the entries up.
-                output[y, x, ch] = (kernel * window[:, :, ch]).sum()
+            if len(pixels.shape) == 3:
+                # Treat R, G, B separately
+                for ch in range(3):
+                    # We want component-wise multiplication of kernel and
+                    # (sub)-matrix of the image, so use np.multiply, then sum
+                    # the entries up.
+                    output[y, x, ch] = np.multiply(kernel, window[:, :, ch]).sum()
+            else:
+                output[y, x] = np.multiply(kernel, window).sum()
 
     return output
 
@@ -118,7 +113,12 @@ def edge_pad_2D(ary, pad_width):
 
     # Initiate zero-filled array with pad_width additional rows / columns on
     # every side.
-    out = np.zeros((height + 2 * pad_width, width + 2 * pad_width, 3), dtype=int)
+    # 2D input => 2D output :)
+    if len(ary.shape) == 2:
+        out = np.zeros((height + 2 * pad_width, width + 2 * pad_width), dtype=int)
+    else:
+        out = np.zeros((height + 2 * pad_width, width + 2 * pad_width, 3), dtype=int)
+
     # And place the input flush in the middle
     out[pad_width:-pad_width, pad_width:-pad_width] = ary
 
@@ -179,7 +179,7 @@ def shrink(pixels, factor, sampling_function):
 
 
 def usage():
-    print ("Usage: process.py <resize|blur|edge|edge_x|edge_y> <input_file> <output_file>")
+    print ("Usage: process.py <resize|blur|edge> <input_file> <output_file>")
     sys.exit(1)
 
 if __name__ == '__main__':
