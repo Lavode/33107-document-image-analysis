@@ -20,7 +20,12 @@ BLUR_KERNEL_LARGE = np.array(
         ]
 ) / 234
 
-EDGE_KERNEL = np.array([[-1, -1, -1], [-1, 8, -1], [-1, -1, -1]]) / 100
+# Approximation of 2nd derivation
+EDGE_KERNEL = np.array([[-1, -1, -1], [-1, 8, -1], [-1, -1, -1]])
+
+# Sobel kernel: Smoothing & edge detection in one
+SOBEL_X_KERNEL = np.array([[1, 0, -1], [2, 0, -2], [1, 0, -1]]) / 4
+SOBEL_Y_KERNEL = SOBEL_X_KERNEL.transpose()
 
 def main():
     if len(sys.argv) != 4:
@@ -42,6 +47,16 @@ def main():
         pixels = load_pixels(input_file, rgb=False)
         out_pixels = convolute_2D(pixels, EDGE_KERNEL)
 
+    elif operation == 'sobel':
+        pixels = load_pixels(input_file, rgb=False)
+
+        # These will both be int16, with values (due to the nature of the
+        # kernel) in (-2^{10}, 2^{10}). Squaring leads to values in (0,
+        # 2^{20}), so we need a sufficiently large int.
+        out_x = convolute_2D(pixels, SOBEL_X_KERNEL).astype(np.int32)
+        out_y = convolute_2D(pixels, SOBEL_Y_KERNEL).astype(np.int32)
+        out_pixels = np.sqrt(np.square(out_x) + np.square(out_y))
+
     else:
         usage()
 
@@ -62,9 +77,17 @@ def load_pixels(img_path, rgb=True):
 
 
 def write_pixels(img_path, out_pixels):
-    # Must write BGR
-    pixels_bgr = cv2.cvtColor(out_pixels, cv2.COLOR_RGB2BGR)
-    cv2.imwrite(img_path, pixels_bgr)
+    # Clamp to valid values
+    out_pixels = out_pixels.clip(0, 255)
+    # And ensure we write uint8s. OpenCV isn't too picky, but it seems a sane
+    # thing to do.
+    out_pixels = out_pixels.astype(np.uint8)
+
+    if len(out_pixels.shape) == 3:
+        # Must write BGR rather than RGB. Grayscale can be written directly
+        out_pixels = cv2.cvtColor(out_pixels, cv2.COLOR_RGB2BGR)
+
+    cv2.imwrite(img_path, out_pixels)
 
 def convolute_2D(pixels, kernel):
     input_height = pixels.shape[0]
@@ -73,7 +96,10 @@ def convolute_2D(pixels, kernel):
     kernel_height = kernel.shape[0]
     kernel_width = kernel.shape[1]
 
-    output = np.zeros(pixels.shape, dtype=np.uint8)
+    # We need the ability to be able to subtract numbers (for eg edge
+    # detection) without underflowing, so will use a signed integer and clamp
+    # to [0, 255] later when writing
+    output = np.zeros(pixels.shape, dtype=np.int16)
 
     # With an nxn kernel, the middle field is for the pixel itself, so we need
     # floor(n/2) padding on each side.
@@ -108,6 +134,9 @@ def convolute_2D(pixels, kernel):
 # Bootleg version of np.pad(ary, ((pad_width, pad_width), (pad_width, pad_width), (0, 0)), dtype=int)
 # Probably less performant, but hey.
 def edge_pad_2D(ary, pad_width):
+    if pad_width == 0:
+        return ary
+
     height = ary.shape[0]
     width = ary.shape[1]
 
@@ -179,7 +208,7 @@ def shrink(pixels, factor, sampling_function):
 
 
 def usage():
-    print ("Usage: process.py <resize|blur|edge> <input_file> <output_file>")
+    print ("Usage: process.py <resize|blur|edge|sobel> <input_file> <output_file>")
     sys.exit(1)
 
 if __name__ == '__main__':
