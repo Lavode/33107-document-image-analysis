@@ -1,0 +1,243 @@
+\documentclass[a4paper]{scrreprt}
+
+% Uncomment to optimize for double-sided printing.
+% \KOMAoptions{twoside}
+
+% Set binding correction manually, if known.
+% \KOMAoptions{BCOR=2cm}
+
+% Localization options
+\usepackage[english]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+% Quotations
+\usepackage{dirtytalk}
+
+% Floats
+\usepackage{float}
+
+\usepackage{numbertabbing}
+
+% Enhanced verbatim sections. We're mainly interested in
+% \verbatiminput though.
+\usepackage{verbatim}
+
+% Automatically remove leading whitespace in lstlisting
+\usepackage{lstautogobble}
+
+% PDF-compatible landscape mode.
+% Makes PDF viewers show the page rotated by 90°.
+\usepackage{pdflscape}
+
+% Advanced tables
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{longtable}
+
+% Fancy tablerules
+\usepackage{booktabs}
+
+% Graphics
+\usepackage{graphicx}
+
+% Current time
+\usepackage[useregional=numeric]{datetime2}
+
+% Float barriers.
+% Automatically add a FloatBarrier to each \section
+\usepackage[section]{placeins}
+
+% Custom header and footer
+\usepackage{fancyhdr}
+
+\usepackage{geometry}
+\usepackage{layout}
+
+% Math tools
+\usepackage{mathtools}
+% Math symbols
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{amsthm}
+
+\DeclarePairedDelimiter\ceil{\lceil}{\rceil}
+\DeclarePairedDelimiter\floor{\lfloor}{\rfloor}
+
+% General symbols
+\usepackage{stmaryrd}
+
+\DeclarePairedDelimiter\abs{\lvert}{\rvert}
+
+% Indistinguishable operator (three stacked tildes)
+\newcommand*{\diffeo}{% 
+  \mathrel{\vcenter{\offinterlineskip
+  \hbox{$\sim$}\vskip-.35ex\hbox{$\sim$}\vskip-.35ex\hbox{$\sim$}}}}
+
+% Bullet point
+\newcommand{\tabitem}{~~\llap{\textbullet}~~}
+
+\floatstyle{ruled}
+\newfloat{algo}{htbp}{algo}
+\floatname{algo}{Algorithm}
+% For use in algorithms
+\newcommand{\str}[1]{\textsc{#1}}
+\newcommand{\var}[1]{\textit{#1}}
+\newcommand{\op}[1]{\textsl{#1}}
+
+\pagestyle{plain}
+% \fancyhf{}
+% \lhead{}
+% \lfoot{}
+% \rfoot{}
+% 
+% Source code & highlighting
+\usepackage{listings}
+
+% SI units
+\usepackage[binary-units=true]{siunitx}
+\DeclareSIUnit\cycles{cycles}
+
+% Convenience commands
+\newcommand{\mailsubject}{33107 - Document Image Analysis - Series 1}
+\newcommand{\maillink}[1]{\href{mailto:#1?subject=\mailsubject}
+                               {#1}}
+
+% Should use this command wherever the print date is mentioned.
+\newcommand{\printdate}{\today}
+
+\subject{33107 - Document Image Analysis}
+\title{Series 1}
+
+\author{Michael Senn \maillink{michael.senn@students.unibe.ch} - 16-126-880}
+
+\date{\printdate}
+
+% Needs to be the last command in the preamble, for one reason or
+% another. 
+\usepackage{hyperref}
+
+\begin{document}
+\maketitle
+
+
+\setcounter{chapter}{0}
+
+\chapter{Series 1}
+
+\section{GitHub repository}
+
+The code can be found on \url{https://github.com/Lavode/33107-document-image-analysis}
+
+\section{Resizing algorithm}
+
+For resizing, nearest-neighbour interpolation was implemented. A pixel $(x, y)$
+in the output image is set the `nearest' corresponding pixel in the input
+image.  For upscaling this means that multiple output pixels will be equal to
+one input pixel, for downscaling this means that output pixels will be an
+evenly spaced subset of input pixels.
+
+\begin{algo}
+  \vbox{
+    \small
+    \begin{numbertabbing}
+      xxxx\=xxxx\=xxxx\=xxxx\=xxxx\=xxxx\=MMMMMMMMMMMMMMMMMMM\=\kill
+	  \textbf{Input} \\
+	  \> \var{I}: Input image \\
+	  \> \var{f}: Scale factor. f > 1 for upscaling, f < 1 for downscaling \\
+	  \> \var{(x, y)}: Output coordinates \\
+	  \textbf{Algorithm} \\
+      \> \var{x'} := $\floor{x * f}$ \\
+      \> \var{y'} := $\floor{y * f}$ \\
+	  \> \textbf{Return} I[x', y']
+    \end{numbertabbing}
+  }
+  \caption{Nearest-neighbour interpolation} 
+  \label{alg:nearest_neighbour}
+\end{algo}
+
+\section{Convolution algorithm}
+
+let $K$ be the $n \times n$ convolution kernel. Let $I$ be the $a \times b$ input
+image.
+
+\subsection{2D edge padding}
+
+In a first step, the input image is padded. $pad := \floor{n / 2}$ pixels of
+padding are added on each side, allowing the image-kernel multiplication to
+happen for all pixels. Padding is done as edge-padding, where the value of a
+padded pixel $(x, y)$ is determined by the pixel of the input image $(x', y')$
+which is `closest' - that is the pixel with the lowest Manhattan distance.
+
+This can be trivially implemented by first copying the leftmost and rightmost
+columns of the input image an appropriate amount of times on the left
+respectively right, and then copying the topmost and bottommost rows of the
+padded image on the top respectively bottom.
+
+\subsection{Convolution}
+
+The convolution kernel is first flipped in both the horizontal and vertical
+direction, to accomodate for the definition of convolution iterating over the
+elements of the image, and the elements of the kernel, in opposite directions.
+This way convolution can be implemented as simple pairwise multiplication. This
+has no effect on symmetrical kernels.
+
+Convolution then takes place by iterating over each pixel $(x, y)$ of the input
+image - excluding the pixels which were added as padding - and performing a
+component-wise matrix multiplication + sum of the convolution kernel $K$ with
+the $n \times n$ window of pixels surrounding $(x, y)$.
+
+\subsection{Blurring}
+
+For blurring, a $5 \times 5$ gaussian kernel from the lecture notes was used:
+\[
+		K = \begin{pmatrix}
+				1 & 3 & 5 & 3 & 1 \\
+				3 & 14 & 23 & 14 & 3 \\
+				5 & 23 & 38 & 23 & 5 \\
+				3 & 14 & 23 & 14 & 3 \\
+				1 & 3 & 5 & 3 & 1
+		\end{pmatrix} / 234
+\]
+
+It works by looking at the $5 \times 5$ pixels surrounding each pixel $(x, y)$,
+and setting the corresponding pixel of the output as the average of these
+pixels, weighted with the corresponding factors from the kernel.
+
+The convolution $K \cdot I$ was used directly as output.
+
+\subsection{Edge detection}
+
+For edge detection, two Sobel kernels were used:
+\begin{align*}
+		K_x & = \begin{pmatrix}
+				1 & 0 & -1 \\
+				2 & 0 & -2 \\
+				1 & 0 & -1
+		\end{pmatrix} \\
+		K_y &= \begin{pmatrix}
+				1 & 2 & 1 \\
+				0 & 0 & 0 \\
+				-1 & -2 & -1
+		\end{pmatrix}
+\end{align*}
+
+The gradient was calculated as the convolution of the input image with $K_x$
+respectively $K_y$:
+\[
+		\nabla I = \begin{pmatrix}
+				K_x \cdot I \\
+				K_y \cdot I
+		\end{pmatrix}
+\]
+
+And finally its magnitude:
+\[
+		\abs{\nabla I} = \sqrt{(K_x \cdot I)^2 + (K_y \cdot I)^2}
+\]
+
+Which was used as the output image.
+
+The Sobel kernel combines a smoothing operation - to remove noise - with an
+approximation of the gradient in .
+
+\end{document}

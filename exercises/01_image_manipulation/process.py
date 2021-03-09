@@ -90,6 +90,8 @@ def write_pixels(img_path, out_pixels):
     cv2.imwrite(img_path, out_pixels)
 
 def convolute_2D(pixels, kernel):
+    kernel = np.flipud(np.fliplr(kernel))
+
     input_height = pixels.shape[0]
     input_width = pixels.shape[1]
 
