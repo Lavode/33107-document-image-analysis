@@ -126,12 +126,12 @@
 
 \section{GitHub repository}
 
-The code can be found on \url{https://github.com/Lavode/33107-document-image-analysis}
+The code can be found at \url{https://github.com/Lavode/33107-document-image-analysis}
 
 \section{Resizing algorithm}
 
 For resizing, nearest-neighbour interpolation was implemented. A pixel $(x, y)$
-in the output image is set the `nearest' corresponding pixel in the input
+in the output image is set to the `nearest' corresponding pixel in the input
 image.  For upscaling this means that multiple output pixels will be equal to
 one input pixel, for downscaling this means that output pixels will be an
 evenly spaced subset of input pixels.
@@ -165,8 +165,8 @@ image.
 In a first step, the input image is padded. $pad := \floor{n / 2}$ pixels of
 padding are added on each side, allowing the image-kernel multiplication to
 happen for all pixels. Padding is done as edge-padding, where the value of a
-padded pixel $(x, y)$ is determined by the pixel of the input image $(x', y')$
-which is `closest' - that is the pixel with the lowest Manhattan distance.
+padded pixel is determined by the pixel of the input image which is `closest' -
+that is the pixel with the lowest Manhattan distance.
 
 This can be trivially implemented by first copying the leftmost and rightmost
 columns of the input image an appropriate amount of times on the left
@@ -177,14 +177,20 @@ padded image on the top respectively bottom.
 
 The convolution kernel is first flipped in both the horizontal and vertical
 direction, to accomodate for the definition of convolution iterating over the
-elements of the image, and the elements of the kernel, in opposite directions.
+elements of the image the opposite direction from the elements of the kernel.
 This way convolution can be implemented as simple pairwise multiplication. This
 has no effect on symmetrical kernels.
 
 Convolution then takes place by iterating over each pixel $(x, y)$ of the input
 image - excluding the pixels which were added as padding - and performing a
-component-wise matrix multiplication + sum of the convolution kernel $K$ with
-the $n \times n$ window of pixels surrounding $(x, y)$.
+component-wise matrix multiplication \& sum of the convolution kernel $K$ with
+the $n \times n$ window of pixels surrounding $(x, y)$:
+
+\[
+		K \cdot I[x, y] = \sum_{i = x - n}^{x+n} \sum_{j = y - n}^{y + n} K[i, j] \cdot I[i, j]
+\]
+
+For RGB images, convolution happens separately for each colour.
 
 \subsection{Blurring}
 
