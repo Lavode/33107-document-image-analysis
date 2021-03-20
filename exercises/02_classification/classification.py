@@ -26,7 +26,7 @@ CLASSES = set(
 
 # Upper limit to preallocate sample arrays. Will be truncated in the end.
 TRAINING_DATA_COUNT = 6000
-MAX_SAMPLE_COUNT_PER_CLASS = 10
+MAX_SAMPLE_COUNT_PER_CLASS = 5000
 
 FEATURE_COUNT = 2
 HORIZONTAL_PROFILE_IDX = 0
@@ -80,22 +80,47 @@ class Classifier:
         print("Finalizing classifier")
 
         for cls in self.classes:
-            print("Truncating unused samples")
+            print("Processing class {}".format(cls))
             allocated = self.max_sample_count
             used = self.current_idx[cls]
 
             for feature in self.features:
+                print("\tProcessing feature {}".format(feature['name']))
                 feature_id = feature['id']
 
-                print("\tClass {} has {} samples allocated, {} used. Truncating...".format(cls, allocated, used))
+                print("\t\t{} samples allocated, {} used. Truncating...".format(allocated, used))
                 # `used` is highest *unused* index, so is also the number of
                 # trained samples - hence the slicing just works
                 self.samples[cls][feature_id] = self.samples[cls][feature_id][: used, :]
 
-                print("Calculating representative as mean of used features")
+                print("\t\tCalculating representative as mean of used features")
                 # Sum along sample axis (0), then divide by number of samples
                 self.representatives[cls][feature_id] = (self.samples[cls][feature_id].sum(0) / used).astype(np.uint8)
 
+    def test(self, pixels):
+        # We'll simply sum the difference values (in [0, 1)) reported by each
+        # feature, then again normalize to [0, 1).
+        differences = {}
+
+        for cls in self.classes:
+            differences[cls] = 0
+            representative = self.representatives[cls]
+
+            for feature in self.features:
+                feature_id = feature['id']
+
+                test_feature = feature['f'](pixels)
+                diff = feature['f_compare'](test_feature, representative[feature_id])
+                differences[cls] += diff
+
+        # Normalize to [0, 1)
+        feature_count = len(self.features)
+        for cls in differences:
+            differences[cls] /= feature_count
+
+        sorted_diffs = sorted(differences.items(), key=lambda x: x[1])
+
+        return sorted_diffs[0]
 
 
 def main():
@@ -104,24 +129,54 @@ def main():
                 'id': 'horizontal_profile',
                 'name': "Horizontal profile",
                 'f': extract_horizontal_profile,
+                'f_compare': compare_profiles,
                 'dim': (28,)
             },
             {
                 'id': 'vertical_profile',
                 'name': "Vertical profile",
                 'f': extract_vertical_profile,
+                'f_compare': compare_profiles,
                 'dim': (28,)
             },
     ]
     classifier = Classifier(CLASSES, TRAINING_DATA_COUNT, features)
 
-    # pixels = load_img('mnist/train/0/21273.png', rgb=False)
-    # classifier.train_img(pixels, '0')
-
     train_classifier_from_data(classifier)
     classifier.finalize()
 
-    print(classifier.representatives['3']['vertical_profile'])
+    stats = test_classifier(classifier)
+    for cls in stats:
+        print("Class {} => {}% correct".format(cls, round(stats[cls]['accuracy'] * 100, 1)))
+
+
+def test_classifier(classifier):
+    stats = {}
+    for cls in CLASSES:
+        stats[cls] = { 'total': 0, 'correct': 0, 'incorrect': 0 }
+
+        path = Path(DATA_ROOT, TEST_DIR, cls)
+        if not path.exists():
+            raise RuntimeError("Testing path does not exist: {}".format(path))
+
+        for img_path in path.glob('*.png'):
+            # MNIST database is grayscale
+            img_pixels = load_img(str(img_path), rgb=False)
+
+            classification, score = classifier.test(img_pixels)
+            # print("Actual: {}, Classification: {}, Score: {}".format(cls, classification, score))
+
+            stats[cls]['total'] += 1
+            if classification == cls:
+                stats[cls]['correct'] += 1
+            else:
+                stats[cls]['incorrect'] += 1
+
+    for cls in stats:
+        stats[cls]['accuracy'] = stats[cls]['correct'] / stats[cls]['total']
+
+    return stats
+
 
 def train_classifier_from_data(classifier):
     for cls in CLASSES:
@@ -138,20 +193,29 @@ def train_classifier_from_data(classifier):
             classifier.train_img(img_pixels, cls)
             cnt += 1
 
-            if cnt >= MAX_SAMPLE_COUNT_PER_CLASS:
+            if MAX_SAMPLE_COUNT_PER_CLASS is not None and cnt >= MAX_SAMPLE_COUNT_PER_CLASS:
                 break
 
 def extract_horizontal_profile(pixels):
-    return profile_along_axis(pixels, 0)
+    return extract_profile_along_axis(pixels, 0)
 
 def extract_vertical_profile(pixels):
-    return profile_along_axis(pixels, 1)
+    return extract_profile_along_axis(pixels, 1)
 
-def profile_along_axis(pixels, axis):
+def extract_profile_along_axis(pixels, axis):
     # Data we get is grayscale so in [0, 256). To ensure the profile is in
     # this range too, we normalize by dividing by the shape along this
     # axis.
     return (pixels / pixels.shape[axis]).sum(axis).astype(np.uint8)
+
+def compare_profiles(a, b):
+    # We'll use the sum of absolute component-wise differences, normalized to [0, 256)
+    # Casting to a signed & sufficiently large type first
+    diff = np.abs(a.astype(np.int32) - b.astype(np.int32)).sum() / a.shape[0]
+
+    # Finally normalize to [0, 1)
+    return diff / 256.0
+
 
 
 # Loads image using CV2, returns a n*m*3 (for RGB) respectively a n*m (for
