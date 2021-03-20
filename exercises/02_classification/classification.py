@@ -148,19 +148,26 @@ class Classifier:
 def main():
     features = [
             {
-                'id': 'horizontal_profile',
-                'name': "Horizontal profile",
-                'f': extract_horizontal_profile,
-                'f_compare': compare_profiles,
-                'dim': (28,)
+                'id': 'average_pixel',
+                'name': "Average pixel",
+                'f': extract_average_pixel,
+                'f_compare': compare_average_pixel,
+                'dim': (1,)
             },
-            {
-                'id': 'vertical_profile',
-                'name': "Vertical profile",
-                'f': extract_vertical_profile,
-                'f_compare': compare_profiles,
-                'dim': (28,)
-            },
+            # {
+            #     'id': 'horizontal_profile',
+            #     'name': "Horizontal profile",
+            #     'f': extract_horizontal_profile,
+            #     'f_compare': compare_profiles,
+            #     'dim': (28,)
+            # },
+            # {
+            #     'id': 'vertical_profile',
+            #     'name': "Vertical profile",
+            #     'f': extract_vertical_profile,
+            #     'f_compare': compare_profiles,
+            #     'dim': (28,)
+            # },
             # {
             #     'id': 'euclidean_distance',
             #     'name': 'Euclidean distance',
@@ -264,6 +271,13 @@ def compare_euclidean_distance(a, b):
 
     # And finally the sqrt
     return np.sqrt(sum_of_diff)
+
+def extract_average_pixel(pixels):
+    return pixels.sum() / (pixels.shape[0] * pixels.shape[1])
+
+def compare_average_pixel(a, b):
+    # Average pixel value will be in [0, 255], normalize to [0, 1]
+    return abs(a - b) / 255
 
 
 # Loads image using CV2, returns a n*m*3 (for RGB) respectively a n*m (for
