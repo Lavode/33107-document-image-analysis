@@ -9,6 +9,8 @@ TEST_DIR = 'test'
 TRAIN_DIR = 'train'
 VALIDATION_DIR = 'val'
 
+DEBUG=True
+
 CLASSES = set(
         [
             '0',
@@ -26,31 +28,27 @@ CLASSES = set(
 
 # Upper limit to preallocate sample arrays. Will be truncated in the end.
 TRAINING_DATA_COUNT = 6000
-MAX_SAMPLE_COUNT_PER_CLASS = 5000
-
-FEATURE_COUNT = 2
-HORIZONTAL_PROFILE_IDX = 0
-VERTICAL_PROFILE_IDX = 1
-
-CLASSES_COUNT = len(CLASSES)
+# Optional limit on how much training data to consume *per class*. Set to
+# `None` to disable.
+MAX_SAMPLE_COUNT_PER_CLASS = None
 
 class Classifier:
-    feature_count = 2
-
-    def __init__(self, classes, max_sample_count, features):
+    def __init__(self, classes, max_sample_count, features, decision_mode):
         self.classes = classes
         self.max_sample_count = max_sample_count
 
         self.features = features
 
+        self.decision_mode = decision_mode
+
         # class => feature id => np array
         self.samples = {}
         for cls in classes:
-            print("Initializing features of class {}".format(cls))
+            debug("Initializing features of class {}".format(cls))
             self.samples[cls] = {}
             for feature in features:
                 dim = (max_sample_count, ) + feature['dim']
-                print("\tInitializing feature '{}' with dimension {}".format(feature['name'], dim))
+                debug("\tInitializing feature '{}' with dimension {}".format(feature['name'], dim))
                 self.samples[cls][feature['id']] = np.zeros(dim)
 
         # class => feature id => np array
@@ -77,50 +75,74 @@ class Classifier:
         self.current_idx[cls] += 1
 
     def finalize(self):
-        print("Finalizing classifier")
+        debug("Finalizing classifier")
 
         for cls in self.classes:
-            print("Processing class {}".format(cls))
+            debug("Processing class {}".format(cls))
             allocated = self.max_sample_count
             used = self.current_idx[cls]
 
             for feature in self.features:
-                print("\tProcessing feature {}".format(feature['name']))
+                debug("\tProcessing feature {}".format(feature['name']))
                 feature_id = feature['id']
 
-                print("\t\t{} samples allocated, {} used. Truncating...".format(allocated, used))
+                debug("\t\t{} samples allocated, {} used. Truncating...".format(allocated, used))
                 # `used` is highest *unused* index, so is also the number of
                 # trained samples - hence the slicing just works
                 self.samples[cls][feature_id] = self.samples[cls][feature_id][: used, :]
 
-                print("\t\tCalculating representative as mean of used features")
+                debug("\t\tCalculating representative as mean of used features")
                 # Sum along sample axis (0), then divide by number of samples
                 self.representatives[cls][feature_id] = (self.samples[cls][feature_id].sum(0) / used).astype(np.uint8)
 
     def test(self, pixels):
-        # We'll simply sum the difference values (in [0, 1)) reported by each
-        # feature, then again normalize to [0, 1).
-        differences = {}
+        # class => feature => distance
+        # Might look like:
+        # { '0' => { 'euclidean' => 0.2, 'horizontal_profile' => 0.4 }, '1' => { 'euclidean' => 0.3, 'horizontal_profile' => 0.5 } }
+        distances = {}
 
+        # Populate dict with the 'distance' metric between every class and
+        # the test sample, by every feature
         for cls in self.classes:
-            differences[cls] = 0
+            distances[cls] = {}
             representative = self.representatives[cls]
 
             for feature in self.features:
                 feature_id = feature['id']
 
                 test_feature = feature['f'](pixels)
-                diff = feature['f_compare'](test_feature, representative[feature_id])
-                differences[cls] += diff
+                dist = feature['f_compare'](test_feature, representative[feature_id])
+                distances[cls][feature_id] = dist
 
-        # Normalize to [0, 1)
+
         feature_count = len(self.features)
-        for cls in differences:
-            differences[cls] /= feature_count
 
-        sorted_diffs = sorted(differences.items(), key=lambda x: x[1])
+        # And calculate a few aggregations:
+        # - sum of features' distances per class
+        # - average distance per class
+        # - minimal distance per class
+        for cls in self.classes:
+            distances[cls]['_sum'] = 0
+            distances[cls]['_min'] = 1
+            for feature in self.features:
+                feature_id = feature['id']
+                feature_distance = distances[cls][feature_id]
 
-        return sorted_diffs[0]
+                distances[cls]['_sum'] += feature_distance
+                if feature_distance < distances[cls]['_min']:
+                    distances[cls]['_min'] = feature_distance
+
+            distances[cls]['_avg'] = distances[cls]['_sum'] / feature_count
+
+        if self.decision_mode == 'avg':
+            sorted_dists = sorted(distances.items(), key=lambda x: x[1]['_avg'])
+        elif self.decision_mode == 'min':
+            sorted_dists = sorted(distances.items(), key=lambda x: x[1]['_min'])
+        else:
+            raise RuntimeError("Invalid decision mode: {}".format(decision_mode))
+
+
+        return sorted_dists[0]
 
 
 def main():
@@ -139,18 +161,32 @@ def main():
                 'f_compare': compare_profiles,
                 'dim': (28,)
             },
+            # {
+            #     'id': 'euclidean_distance',
+            #     'name': 'Euclidean distance',
+            #     'f': extract_flattened_pixels, # No real extraction requried, comparison will operate on pixel values directly
+            #     'f_compare': compare_euclidean_distance,
+            #     'dim': (784,), # 28*28 pixels, flattened
+            # },
     ]
-    classifier = Classifier(CLASSES, TRAINING_DATA_COUNT, features)
+    classifier = Classifier(CLASSES, TRAINING_DATA_COUNT, features, 'min')
 
     train_classifier_from_data(classifier)
     classifier.finalize()
 
     stats = test_classifier(classifier)
-    for cls in stats:
-        print("Class {} => {}% correct".format(cls, round(stats[cls]['accuracy'] * 100, 1)))
+    for cls in sorted(stats.keys()):
+        debug("Class {} => {}% correct".format(cls, round(stats[cls]['accuracy'] * 100, 1)))
 
+    # And some machine-readable output suitable for appending to a CSV for
+    # analysis
+    feature_id = ','.join([ d['name'] for d in features ])
+    print("decision_mode,features,class,total,accuracy")
+    for cls in stats:
+        print("{},\"{}\",{},{},{}".format(classifier.decision_mode, feature_id, cls, stats[cls]['total'], stats[cls]['accuracy']))
 
 def test_classifier(classifier):
+    debug("Testing classifier with test data")
     stats = {}
     for cls in CLASSES:
         stats[cls] = { 'total': 0, 'correct': 0, 'incorrect': 0 }
@@ -164,7 +200,7 @@ def test_classifier(classifier):
             img_pixels = load_img(str(img_path), rgb=False)
 
             classification, score = classifier.test(img_pixels)
-            # print("Actual: {}, Classification: {}, Score: {}".format(cls, classification, score))
+            # debug("Actual: {}, Classification: {}, Score: {}".format(cls, classification, score))
 
             stats[cls]['total'] += 1
             if classification == cls:
@@ -181,7 +217,7 @@ def test_classifier(classifier):
 def train_classifier_from_data(classifier):
     for cls in CLASSES:
         cnt = 0
-        print("Training for class: {}".format(cls))
+        debug("Training for class: {}".format(cls))
 
         path = Path(DATA_ROOT, TRAIN_DIR, cls)
         if not path.exists():
@@ -216,6 +252,18 @@ def compare_profiles(a, b):
     # Finally normalize to [0, 1)
     return diff / 256.0
 
+def extract_flattened_pixels(pixels):
+    return pixels.flatten()
+
+def compare_euclidean_distance(a, b):
+    # Square of per-pixel distance, normalized to [0, 1)
+    per_pixel_diff = np.square((a.astype(np.int32) - b.astype(np.int32)) / 256)
+
+    # And the sum thereof, normalized to [0, 1) once more
+    sum_of_diff = np.sum(per_pixel_diff) / (28*28)
+
+    # And finally the sqrt
+    return np.sqrt(sum_of_diff)
 
 
 # Loads image using CV2, returns a n*m*3 (for RGB) respectively a n*m (for
@@ -232,6 +280,10 @@ def load_img(img_path, rgb=True):
         raise RuntimeError("Unable to load image: {}".format(img_path))
 
     return img
+
+def debug(msg):
+    if DEBUG:
+        print(msg)
 
 if __name__ == '__main__':
     main()

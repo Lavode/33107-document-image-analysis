@@ -1,0 +1,71 @@
+decision_mode,features,class,total,accuracy
+single,"Vertical profile",8,974,0.4394250513347023
+single,"Vertical profile",1,1135,0.8933920704845815
+single,"Vertical profile",6,958,0.7974947807933194
+single,"Vertical profile",2,1032,0.5397286821705426
+single,"Vertical profile",3,1010,0.4801980198019802
+single,"Vertical profile",9,1009,0.7333994053518335
+single,"Vertical profile",7,1028,0.7354085603112841
+single,"Vertical profile",5,892,0.14349775784753363
+single,"Vertical profile",4,982,0.6914460285132383
+single,"Vertical profile",0,980,0.5938775510204082
+avg,"Horizontal profile,Vertical profile",6,958,0.7776617954070981
+avg,"Horizontal profile,Vertical profile",5,892,0.3273542600896861
+avg,"Horizontal profile,Vertical profile",4,982,0.659877800407332
+avg,"Horizontal profile,Vertical profile",3,1010,0.5524752475247525
+avg,"Horizontal profile,Vertical profile",8,974,0.5811088295687885
+avg,"Horizontal profile,Vertical profile",1,1135,0.9022026431718062
+avg,"Horizontal profile,Vertical profile",9,1009,0.6778989098116948
+avg,"Horizontal profile,Vertical profile",2,1032,0.5368217054263565
+avg,"Horizontal profile,Vertical profile",7,1028,0.693579766536965
+avg,"Horizontal profile,Vertical profile",0,980,0.6877551020408164
+single,"Horizontal profile",9,1009,0.3587710604558969
+single,"Horizontal profile",0,980,0.6795918367346939
+single,"Horizontal profile",7,1028,0.2733463035019455
+single,"Horizontal profile",2,1032,0.1501937984496124
+single,"Horizontal profile",8,974,0.46611909650924027
+single,"Horizontal profile",3,1010,0.28316831683168314
+single,"Horizontal profile",6,958,0.2640918580375783
+single,"Horizontal profile",1,1135,0.8035242290748899
+single,"Horizontal profile",4,982,0.2739307535641548
+single,"Horizontal profile",5,892,0.18721973094170405
+single,"Euclidean distance",1,1135,0.9621145374449339
+single,"Euclidean distance",0,980,0.8979591836734694
+single,"Euclidean distance",8,974,0.7392197125256673
+single,"Euclidean distance",2,1032,0.7577519379844961
+single,"Euclidean distance",5,892,0.6827354260089686
+single,"Euclidean distance",4,982,0.8258655804480651
+single,"Euclidean distance",7,1028,0.8317120622568094
+single,"Euclidean distance",3,1010,0.804950495049505
+single,"Euclidean distance",9,1009,0.8067393458870169
+single,"Euclidean distance",6,958,0.8622129436325678
+avg,"Horizontal profile,Vertical profile,Euclidean distance",8,974,0.7145790554414785
+avg,"Horizontal profile,Vertical profile,Euclidean distance",0,980,0.8071428571428572
+avg,"Horizontal profile,Vertical profile,Euclidean distance",1,1135,0.9488986784140969
+avg,"Horizontal profile,Vertical profile,Euclidean distance",4,982,0.7769857433808554
+avg,"Horizontal profile,Vertical profile,Euclidean distance",6,958,0.8580375782881002
+avg,"Horizontal profile,Vertical profile,Euclidean distance",2,1032,0.6928294573643411
+avg,"Horizontal profile,Vertical profile,Euclidean distance",9,1009,0.7888999008919723
+avg,"Horizontal profile,Vertical profile,Euclidean distance",7,1028,0.816147859922179
+avg,"Horizontal profile,Vertical profile,Euclidean distance",3,1010,0.7415841584158416
+avg,"Horizontal profile,Vertical profile,Euclidean distance",5,892,0.5358744394618834
+min,"Horizontal profile,Vertical profile,Euclidean distance",9,1009,0.5619425173439049
+min,"Horizontal profile,Vertical profile,Euclidean distance",4,982,0.5580448065173116
+min,"Horizontal profile,Vertical profile,Euclidean distance",6,958,0.5375782881002088
+min,"Horizontal profile,Vertical profile,Euclidean distance",0,980,0.6183673469387755
+min,"Horizontal profile,Vertical profile,Euclidean distance",5,892,0.18385650224215247
+min,"Horizontal profile,Vertical profile,Euclidean distance",7,1028,0.4970817120622568
+min,"Horizontal profile,Vertical profile,Euclidean distance",3,1010,0.3118811881188119
+min,"Horizontal profile,Vertical profile,Euclidean distance",2,1032,0.22771317829457363
+min,"Horizontal profile,Vertical profile,Euclidean distance",1,1135,0.8837004405286344
+min,"Horizontal profile,Vertical profile,Euclidean distance",8,974,0.41581108829568786
+min,"Horizontal profile,Vertical profile",9,1009,0.5619425173439049
+min,"Horizontal profile,Vertical profile",0,980,0.6183673469387755
+min,"Horizontal profile,Vertical profile",7,1028,0.4980544747081712
+min,"Horizontal profile,Vertical profile",6,958,0.5365344467640919
+min,"Horizontal profile,Vertical profile",2,1032,0.22965116279069767
+min,"Horizontal profile,Vertical profile",1,1135,0.8837004405286344
+min,"Horizontal profile,Vertical profile",5,892,0.18161434977578475
+min,"Horizontal profile,Vertical profile",8,974,0.41683778234086244
+min,"Horizontal profile,Vertical profile",3,1010,0.3108910891089109
+min,"Horizontal profile,Vertical profile",4,982,0.5570264765784114
