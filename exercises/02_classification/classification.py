@@ -1,15 +1,11 @@
-from pathlib import Path
-
 import numpy as np
+
+from sklearn.svm import LinearSVC
+from sklearn.preprocessing import StandardScaler
 
 import classifier
 import features as f
 import util
-
-DATA_ROOT = 'mnist'
-TEST_DIR = 'test'
-TRAIN_DIR = 'train'
-VALIDATION_DIR = 'val'
 
 DEBUG=True
 
@@ -29,6 +25,7 @@ CLASSES = set(
 )
 
 # Upper limit to preallocate sample arrays. Will be truncated in the end.
+# This is the limit *PER CLASS*
 TRAINING_DATA_COUNT = 6000
 # Optional limit on how much training data to consume *per class*. Set to
 # `None` to disable.
@@ -61,31 +58,171 @@ def main():
                 'dim': (28,),
                 'type': np.uint8,
             },
-            {
-                'id': 'euclidean_distance',
-                'name': 'Euclidean distance',
-                'f': f.extract_flattened_pixels, # No real extraction requried, comparison will operate on pixel values directly
-                'f_compare': f.compare_euclidean_distance,
-                'dim': (784,), # 28*28 pixels, flattened
-                'type': np.uint8,
-            },
+            # {
+            #     'id': 'euclidean_distance',
+            #     'name': 'Euclidean distance',
+            #     'f': f.extract_flattened_pixels, # No real extraction required, comparison will operate on pixel values directly
+            #     'f_compare': f.compare_euclidean_distance,
+            #     'dim': (784,), # 28*28 pixels, flattened
+            #     'type': np.uint8,
+            # },
     ]
 
-    _own_classifier(features)
-    # _scikit_classifiers(features)
+    # _custom_classifier(features)
+    _scikit_classifiers(features)
 
-def _scikit_classifiers():
-    pass
+def _scikit_classifiers(features):
+    # - Fix random seed
+    # - Increase iterations such that it converges
+    # - If n_samples > n_features => dual = False
+    svc = LinearSVC(random_state=42, max_iter=10000, dual=False)
+
+    _train_scikit_classifier(svc, features)
+
+    stats = _test_scikit_classifier(svc, features)
+    for cls in sorted(stats.keys()):
+        util.debug("Class {} => {}% correct ({} total)".format(cls, round(stats[cls]['accuracy'] * 100, 1), stats[cls]['total']))
+
+    # # And some machine-readable output suitable for appending to a CSV for
+    # # analysis
+    # feature_id = ','.join([ d['name'] for d in features ])
+    # print("decision_mode,features,class,total,accuracy")
+    # for cls in stats:
+    #     print("{},\"{}\",{},{},{}".format(clsf.decision_mode, feature_id, cls, stats[cls]['total'], stats[cls]['accuracy']))
+
+
+def _train_scikit_classifier(clsf, features):
+    x, y = _get_scikit_training_data(features)
+    print("Dimensions of X: {}".format(x.shape))
+    print("Dimensions of Y: {}".format(y.shape))
+
+    print("Training LinearSVC")
+    clsf.fit(x, y)
+
+def _test_scikit_classifier(clsf, features):
+    print("Testing LinearSVC")
+    xtest, ytest = _get_scikit_testing_data(features)
+    predictions = clsf.predict(xtest)
+
+    stats = {}
+    for cls in CLASSES:
+        stats[int(cls)] = { 'total': 0, 'correct': 0, 'incorrect': 0 }
+
+    idx = 0
+    for prediction in predictions:
+        prediction = int(prediction)
+        actual = int(ytest[idx])
+
+        stats[actual]['total'] += 1
+        if prediction == actual:
+            stats[actual]['correct'] += 1
+        else:
+            stats[actual]['incorrect'] += 1
+
+        idx += 1
+
+    for cls in stats:
+        stats[cls]['accuracy'] = stats[cls]['correct'] / stats[cls]['total']
+
+    return stats
+
+# TODO: DRY testing/training loading
+def _get_scikit_testing_data(features):
+    # Length of feature vector
+    feature_length =_scikit_feature_length(features)
+
+    x, y = _scikit_xy(len(CLASSES), TRAINING_DATA_COUNT, feature_length)
+
+    sample_idx = 0
+
+    for cls in CLASSES:
+        for img_pixels, _ in util._test_data(cls):
+            x[sample_idx] = _scikit_features(img_pixels, features, feature_length)
+            y[sample_idx] = int(cls)
+
+            sample_idx += 1
+
+    # sample_idx is now the *count* of actual samples, so we can use it to truncate x and y
+    x = x[ : sample_idx]
+    y = y[ : sample_idx]
+
+    # Finally we'll normalize mean and variance
+    print("Normalizing data")
+    scaler = StandardScaler()
+    scaler.fit(x)
+    x = scaler.transform(x)
+
+    return x, y
+
+def _get_scikit_training_data(features):
+    # Length of feature vector
+    feature_length =_scikit_feature_length(features)
+
+    x, y = _scikit_xy(len(CLASSES), TRAINING_DATA_COUNT, feature_length)
+
+    sample_idx = 0
+
+    for img_pixels, cls in util._train_data(CLASSES, MAX_SAMPLE_COUNT_PER_CLASS):
+        x[sample_idx] = _scikit_features(img_pixels, features, feature_length)
+        y[sample_idx] = int(cls)
+
+        sample_idx += 1
+
+    # sample_idx is now the *count* of actual samples, so we can use it to truncate x and y
+    x = x[ : sample_idx]
+    y = y[ : sample_idx]
+
+    # Finally we'll normalize mean and variance
+    print("Normalizing data")
+    scaler = StandardScaler()
+    scaler.fit(x)
+    x = scaler.transform(x)
+
+    return x, y
+
+def _scikit_xy(class_count, sample_data_limit, feature_length):
+    # Upper limit of samples we'll support, required to preallocate storage
+    sample_limit = class_count * sample_data_limit
+
+    x = np.zeros((sample_limit, feature_length))
+    y = np.zeros(sample_limit)
+
+    return x, y
+
+# Get 1-dimensional feature vector suitable for use with scikit for given image
+def _scikit_features(img_pixels, features, feature_vector_length):
+    out = np.zeros(feature_vector_length)
+    feature_idx = 0
+
+    for feature in features:
+        feature_length = feature['dim'][0]
+        out[feature_idx : feature_idx + feature_length] = feature['f'](img_pixels)
+        feature_idx += feature_length
+
+    return out
+
+# Calculate length of (one-dimensional) feature vector to use for Scikit
+# classifiers.
+def _scikit_feature_length(features):
+    length = 0
+
+    for feature in features:
+        dim = feature['dim']
+        if len(dim) != 1:
+            raise RuntimeError("Invalid feature dimensions {}, Scikit classifiers require 1-dimensional feature vector.".format(dim))
+        length += dim[0]
+
+    return length
 
 
 # Train & test own classifier with MNIST data
-def _own_classifier(features):
+def _custom_classifier(features):
     clsf = classifier.Classifier(CLASSES, TRAINING_DATA_COUNT, features, 'avg')
 
     _train_classifier_from_data(clsf)
     clsf.finalize()
 
-    stats = _test_classifier(clsf)
+    stats = _test_custom_classifier(clsf)
     for cls in sorted(stats.keys()):
         util.debug("Class {} => {}% correct ({} total)".format(cls, round(stats[cls]['accuracy'] * 100, 1), stats[cls]['total']))
 
@@ -98,13 +235,14 @@ def _own_classifier(features):
 
 
 # Test custom classifier with data from MNIST test directory
-def _test_classifier(classifier):
+def _test_custom_classifier(classifier):
     util.debug("Testing classifier with test data")
     stats = {}
     for cls in CLASSES:
         stats[cls] = { 'total': 0, 'correct': 0, 'incorrect': 0 }
 
-        for img_pixels in _train_data(cls):
+        # We'll throw away the class it yields
+        for img_pixels, _ in util._test_data(cls):
             classification, score = classifier.test(img_pixels)
             # util.debug("Actual: {}, Classification: {}, Score: {}".format(cls, classification, score))
 
@@ -119,42 +257,9 @@ def _test_classifier(classifier):
 
     return stats
 
-# Generator yielding test datasets and their corresponding class
-def _test_data(limit=None):
-    for cls in CLASSES:
-        util.debug("Loading training data for class: {}".format(cls))
-        path = Path(DATA_ROOT, TRAIN_DIR, cls)
-
-        for img in _images_from_directory(path):
-            yield (img, cls)
-
-# Generator yielding training data for a given class
-def _train_data(cls, limit=None):
-    util.debug("Loading testing data for class: {}".format(cls))
-    path = Path(DATA_ROOT, TEST_DIR, cls)
-
-    for img in _images_from_directory(path):
-        yield img
-
-# Generator yielding grayscale images (as numpy arrays) from the specified directory.
-def _images_from_directory(path, limit=None):
-    if not path.exists():
-        raise RuntimeError("Path does not exist: {}".format(path))
-
-    count = 0
-
-    for img_path in path.glob('*.png'):
-        # MNIST database is grayscale
-        img_pixels = util.load_img(str(img_path), rgb=False)
-        yield img_pixels
-        count += 1
-
-        if limit is not None and cnt >= limit:
-            break
-
 # Train custom classifier with data from MNIST test directory
 def _train_classifier_from_data(classifier):
-    for img_pixels, cls in _test_data(MAX_SAMPLE_COUNT_PER_CLASS):
+    for img_pixels, cls in util._train_data(CLASSES, MAX_SAMPLE_COUNT_PER_CLASS):
         classifier.train_img(img_pixels, cls)
 
 if __name__ == '__main__':

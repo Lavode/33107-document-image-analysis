@@ -29,6 +29,7 @@ ggplot(df_single, aes(x = class, y = accuracy, fill = features)) +
   scale_x_discrete() +
   scale_y_continuous(labels = scales::percent) +
   theme_minimal() +
+  theme(legend.position = "bottom") +
   scale_fill_viridis(discrete = TRUE) +
   labs(y = "Accuracy", x = "Class", fill = "Features") +
   ggsave("../resources/features_single.png", width = 20, units = 'cm', dpi = 'print')
@@ -42,6 +43,7 @@ ggplot(df_profiles, aes(x = class, y = accuracy, fill = features:decision_mode))
   scale_x_discrete() +
   scale_y_continuous(labels = scales::percent) +
   theme_minimal() +
+  theme(legend.position = "bottom") +
   scale_fill_viridis(
     discrete = TRUE, 
     labels = c("Horizontal profile", "avg(Horizontal profile, Vertical profile)", "min(Horizontal profile, Vertical profile)", "Vertical profile")

@@ -1,4 +1,11 @@
+from pathlib import Path
+
 import cv2
+
+DATA_ROOT = 'mnist'
+TEST_DIR = 'test'
+TRAIN_DIR = 'train'
+VALIDATION_DIR = 'val'
 
 DEBUG=True
 
@@ -21,3 +28,35 @@ def load_img(img_path, rgb=True):
 
     return img
 
+# Generator yielding test datasets and their corresponding class
+def _train_data(classes, limit=None):
+    for cls in classes:
+        debug("Loading training data for class: {}".format(cls))
+        path = Path(DATA_ROOT, TRAIN_DIR, cls)
+
+        for img in _images_from_directory(path, limit):
+            yield (img, cls)
+
+# Generator yielding training data for a given class
+def _test_data(cls, limit=None):
+    debug("Loading testing data for class: {}".format(cls))
+    path = Path(DATA_ROOT, TEST_DIR, cls)
+
+    for img in _images_from_directory(path, limit):
+        yield img, cls
+
+# Generator yielding grayscale images (as numpy arrays) from the specified directory.
+def _images_from_directory(path, limit=None):
+    if not path.exists():
+        raise RuntimeError("Path does not exist: {}".format(path))
+
+    count = 0
+
+    for img_path in path.glob('*.png'):
+        # MNIST database is grayscale
+        img_pixels = load_img(str(img_path), rgb=False)
+        yield img_pixels
+        count += 1
+
+        if limit is not None and count >= limit:
+            break
