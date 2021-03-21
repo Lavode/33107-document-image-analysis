@@ -93,7 +93,7 @@ class Classifier:
 
                 debug("\t\tCalculating representative as mean of used features")
                 # Sum along sample axis (0), then divide by number of samples
-                self.representatives[cls][feature_id] = (self.samples[cls][feature_id].sum(0) / used).astype(np.uint8)
+                self.representatives[cls][feature_id] = (self.samples[cls][feature_id].sum(0) / used).astype(feature['type'])
 
     def test(self, pixels):
         # class => feature => distance
@@ -152,21 +152,24 @@ def main():
                 'name': "Average pixel",
                 'f': extract_average_pixel,
                 'f_compare': compare_average_pixel,
-                'dim': (1,)
+                'dim': (1,),
+                'type': np.float64,
             },
             # {
             #     'id': 'horizontal_profile',
             #     'name': "Horizontal profile",
             #     'f': extract_horizontal_profile,
             #     'f_compare': compare_profiles,
-            #     'dim': (28,)
+            #     'dim': (28,),
+            #     'type': np.uint8,
             # },
             # {
             #     'id': 'vertical_profile',
             #     'name': "Vertical profile",
             #     'f': extract_vertical_profile,
             #     'f_compare': compare_profiles,
-            #     'dim': (28,)
+            #     'dim': (28,),
+            #     'type': np.uint8,
             # },
             # {
             #     'id': 'euclidean_distance',
@@ -174,16 +177,20 @@ def main():
             #     'f': extract_flattened_pixels, # No real extraction requried, comparison will operate on pixel values directly
             #     'f_compare': compare_euclidean_distance,
             #     'dim': (784,), # 28*28 pixels, flattened
+            #     'type': np.uint8,
             # },
     ]
-    classifier = Classifier(CLASSES, TRAINING_DATA_COUNT, features, 'min')
+    classifier = Classifier(CLASSES, TRAINING_DATA_COUNT, features, 'avg')
 
     train_classifier_from_data(classifier)
     classifier.finalize()
 
+    for cls in sorted(classifier.representatives.keys()):
+        print("{} => {}".format(cls, repr(classifier.representatives[cls])))
+
     stats = test_classifier(classifier)
     for cls in sorted(stats.keys()):
-        debug("Class {} => {}% correct".format(cls, round(stats[cls]['accuracy'] * 100, 1)))
+        debug("Class {} => {}% correct ({} total)".format(cls, round(stats[cls]['accuracy'] * 100, 1), stats[cls]['total']))
 
     # And some machine-readable output suitable for appending to a CSV for
     # analysis
@@ -263,7 +270,7 @@ def extract_flattened_pixels(pixels):
     return pixels.flatten()
 
 def compare_euclidean_distance(a, b):
-    # Square of per-pixel distance, normalized to [0, 1)
+    # Square of per-pixel distance, normalized to [0, 1) (sum normalized, then squared)
     per_pixel_diff = np.square((a.astype(np.int32) - b.astype(np.int32)) / 256)
 
     # And the sum thereof, normalized to [0, 1) once more
@@ -273,7 +280,10 @@ def compare_euclidean_distance(a, b):
     return np.sqrt(sum_of_diff)
 
 def extract_average_pixel(pixels):
-    return pixels.sum() / (pixels.shape[0] * pixels.shape[1])
+    # With integers you risk having two class representatives have the same
+    # average value, in which case results might be non-deterministic at worst,
+    # and nonsensical at best.
+    return float(pixels.sum()) / (pixels.shape[0] * pixels.shape[1])
 
 def compare_average_pixel(a, b):
     # Average pixel value will be in [0, 255], normalize to [0, 1]
