@@ -72,10 +72,11 @@ def main():
     ]
 
     _own_classifier(features)
-    # scikit_classifiers(features)
+    # _scikit_classifiers(features)
 
-def scikit_classifiers():
-    print("Hi")
+def _scikit_classifiers():
+    pass
+
 
 # Train & test own classifier with MNIST data
 def _own_classifier(features):
@@ -103,14 +104,7 @@ def _test_classifier(classifier):
     for cls in CLASSES:
         stats[cls] = { 'total': 0, 'correct': 0, 'incorrect': 0 }
 
-        path = Path(DATA_ROOT, TEST_DIR, cls)
-        if not path.exists():
-            raise RuntimeError("Testing path does not exist: {}".format(path))
-
-        for img_path in path.glob('*.png'):
-            # MNIST database is grayscale
-            img_pixels = util.load_img(str(img_path), rgb=False)
-
+        for img_pixels in _train_data(cls):
             classification, score = classifier.test(img_pixels)
             # util.debug("Actual: {}, Classification: {}, Score: {}".format(cls, classification, score))
 
@@ -125,27 +119,43 @@ def _test_classifier(classifier):
 
     return stats
 
+# Generator yielding test datasets and their corresponding class
+def _test_data(limit=None):
+    for cls in CLASSES:
+        util.debug("Loading training data for class: {}".format(cls))
+        path = Path(DATA_ROOT, TRAIN_DIR, cls)
+
+        for img in _images_from_directory(path):
+            yield (img, cls)
+
+# Generator yielding training data for a given class
+def _train_data(cls, limit=None):
+    util.debug("Loading testing data for class: {}".format(cls))
+    path = Path(DATA_ROOT, TEST_DIR, cls)
+
+    for img in _images_from_directory(path):
+        yield img
+
+# Generator yielding grayscale images (as numpy arrays) from the specified directory.
+def _images_from_directory(path, limit=None):
+    if not path.exists():
+        raise RuntimeError("Path does not exist: {}".format(path))
+
+    count = 0
+
+    for img_path in path.glob('*.png'):
+        # MNIST database is grayscale
+        img_pixels = util.load_img(str(img_path), rgb=False)
+        yield img_pixels
+        count += 1
+
+        if limit is not None and cnt >= limit:
+            break
 
 # Train custom classifier with data from MNIST test directory
 def _train_classifier_from_data(classifier):
-    for cls in CLASSES:
-        cnt = 0
-        util.debug("Training for class: {}".format(cls))
-
-        path = Path(DATA_ROOT, TRAIN_DIR, cls)
-        if not path.exists():
-            raise RuntimeError("Training path does not exist: {}".format(path))
-
-        for img_path in path.glob('*.png'):
-            # MNIST database is grayscale
-            img_pixels = util.load_img(str(img_path), rgb=False)
-            classifier.train_img(img_pixels, cls)
-            cnt += 1
-
-            if MAX_SAMPLE_COUNT_PER_CLASS is not None and cnt >= MAX_SAMPLE_COUNT_PER_CLASS:
-                break
-
-
+    for img_pixels, cls in _test_data(MAX_SAMPLE_COUNT_PER_CLASS):
+        classifier.train_img(img_pixels, cls)
 
 if __name__ == '__main__':
     main()
