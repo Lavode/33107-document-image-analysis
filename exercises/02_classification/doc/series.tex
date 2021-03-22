@@ -297,8 +297,8 @@ vector, of which the euclidean distance is calculated:
 \begin{itemize}
 		\item In a first step, the classifier is trained on the training set
 				with the set of chosen features. The features are extracted
-				from each sample, and a class representative calculated as the
-				average feature vector over all samples.
+				from each sample, and a class representative is calculated as
+				the average feature vector over all samples.
 
 		\item In the testing step, the class representatives are then used to
 				gauge the `distance' of each to-be-classified image from the
@@ -336,7 +336,7 @@ The horizontal and vertical profiles performed well at identifying digits with
 a distinct profile, with the vertical profile usually outperforming, other
 times being on par with, the horizontal profile.
 
-The euclidean distance finally outperformed all the other features in every
+The euclidean distance finally outperformed all the other features for every
 single digit.
 
 \begin{figure}[h]
@@ -355,8 +355,8 @@ lower of the two was used. Results are shown in figure
 \ref{fig:evaluation_profiles}.
 
 The average of the two performed slightly better than the vertical profile on
-some classes, while being on par with for others. The minimum of the two
-performed consistently worse.
+some classes, while being on par for others. The minimum of the two performed
+consistently worse.
 
 \begin{figure}[h]
         \centering
@@ -427,15 +427,15 @@ In combination with the following feature sets:
 
 \begin{itemize}
 		\item Horizontal \& vertical profile
-		\item Raw pixel values
-		\item Horizontal \& vertical profile \& raw pixel values
+		\item Raw pixel values as $784$-dimensional vector
+		\item Raw pixel values, horizontal \& vertical profile
 \end{itemize}
 
 Only feature sets which had performed well with the custom classifier were
 considered, to not bloat this any more.
 
-The combination of all three features was not tested with the K-Neighbors
-classifier, due to training times exceeding half an hour.
+The combination of all three features was not tested with the linear
+support-vector classifier, due to training times exceeding half an hour.
 
 \subsection{Standardization}
 
@@ -532,7 +532,7 @@ accuracy of each classifier and feature set.
 				MLP & Horizontal \& vertical profile \& Full image & \SI{96}{\percent} & \SI{94}{\percent} & \SI{98}{\percent} \\
 				\bottomrule
 		\end{tabular}
-		\label{tbl:evaluation}
+		\label{tbl:scikit_accuracy}
 		\caption{Feature statistics}
 \end{table}
 
