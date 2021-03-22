@@ -1,0 +1,101 @@
+classifier_type,features,class,total,accuracy
+LinearSVC,"Horizontal profile,Vertical profile",2,1032,0.5881782945736435
+LinearSVC,"Horizontal profile,Vertical profile",0,980,0.8642857142857143
+LinearSVC,"Horizontal profile,Vertical profile",1,1135,0.9233480176211454
+LinearSVC,"Horizontal profile,Vertical profile",8,974,0.6129363449691991
+LinearSVC,"Horizontal profile,Vertical profile",4,982,0.8503054989816701
+LinearSVC,"Horizontal profile,Vertical profile",9,1009,0.7195242814667988
+LinearSVC,"Horizontal profile,Vertical profile",3,1010,0.7386138613861386
+LinearSVC,"Horizontal profile,Vertical profile",5,892,0.484304932735426
+LinearSVC,"Horizontal profile,Vertical profile",7,1028,0.8667315175097277
+LinearSVC,"Horizontal profile,Vertical profile",6,958,0.9091858037578288
+LinearSVC,"Full image",5,892,0.8665919282511211
+LinearSVC,"Full image",2,1032,0.874031007751938
+LinearSVC,"Full image",4,982,0.9287169042769857
+LinearSVC,"Full image",1,1135,0.9788546255506608
+LinearSVC,"Full image",8,974,0.8521560574948666
+LinearSVC,"Full image",0,980,0.9734693877551021
+LinearSVC,"Full image",3,1010,0.906930693069307
+LinearSVC,"Full image",9,1009,0.8761149653121902
+LinearSVC,"Full image",7,1028,0.9105058365758755
+LinearSVC,"Full image",6,958,0.9384133611691023
+KNeighbors[k=5],"Horizontal profile,Vertical profile",3,1010,0.8326732673267326
+KNeighbors[k=5],"Horizontal profile,Vertical profile",7,1028,0.8998054474708171
+KNeighbors[k=5],"Horizontal profile,Vertical profile",4,982,0.90020366598778
+KNeighbors[k=5],"Horizontal profile,Vertical profile",5,892,0.6625560538116592
+KNeighbors[k=5],"Horizontal profile,Vertical profile",0,980,0.9673469387755103
+KNeighbors[k=5],"Horizontal profile,Vertical profile",8,974,0.797741273100616
+KNeighbors[k=5],"Horizontal profile,Vertical profile",2,1032,0.8585271317829457
+KNeighbors[k=5],"Horizontal profile,Vertical profile",1,1135,0.9859030837004406
+KNeighbors[k=5],"Horizontal profile,Vertical profile",9,1009,0.8939544103072349
+KNeighbors[k=5],"Horizontal profile,Vertical profile",6,958,0.9363256784968684
+KNeighbors[k=3],"Horizontal profile,Vertical profile",8,974,0.797741273100616
+KNeighbors[k=3],"Horizontal profile,Vertical profile",5,892,0.6625560538116592
+KNeighbors[k=3],"Horizontal profile,Vertical profile",2,1032,0.8585271317829457
+KNeighbors[k=3],"Horizontal profile,Vertical profile",1,1135,0.9859030837004406
+KNeighbors[k=3],"Horizontal profile,Vertical profile",6,958,0.9363256784968684
+KNeighbors[k=3],"Horizontal profile,Vertical profile",0,980,0.9673469387755103
+KNeighbors[k=3],"Horizontal profile,Vertical profile",7,1028,0.8998054474708171
+KNeighbors[k=3],"Horizontal profile,Vertical profile",9,1009,0.8939544103072349
+KNeighbors[k=3],"Horizontal profile,Vertical profile",4,982,0.90020366598778
+KNeighbors[k=3],"Horizontal profile,Vertical profile",3,1010,0.8326732673267326
+KNeighbors[k=3],"Full image",4,982,0.9327902240325866
+KNeighbors[k=3],"Full image",9,1009,0.9078295341922695
+KNeighbors[k=3],"Full image",3,1010,0.9544554455445544
+KNeighbors[k=3],"Full image",5,892,0.9260089686098655
+KNeighbors[k=3],"Full image",1,1135,0.9938325991189427
+KNeighbors[k=3],"Full image",0,980,0.9826530612244898
+KNeighbors[k=3],"Full image",6,958,0.9718162839248434
+KNeighbors[k=3],"Full image",2,1032,0.9186046511627907
+KNeighbors[k=3],"Full image",7,1028,0.9241245136186771
+KNeighbors[k=3],"Full image",8,974,0.9014373716632443
+KNeighbors[k=5],"Full image",8,974,0.9014373716632443
+KNeighbors[k=5],"Full image",2,1032,0.9186046511627907
+KNeighbors[k=5],"Full image",6,958,0.9718162839248434
+KNeighbors[k=5],"Full image",7,1028,0.9241245136186771
+KNeighbors[k=5],"Full image",9,1009,0.9078295341922695
+KNeighbors[k=5],"Full image",3,1010,0.9544554455445544
+KNeighbors[k=5],"Full image",5,892,0.9260089686098655
+KNeighbors[k=5],"Full image",1,1135,0.9938325991189427
+KNeighbors[k=5],"Full image",0,980,0.9826530612244898
+KNeighbors[k=5],"Full image",4,982,0.9327902240325866
+MLP,"Horizontal profile,Vertical profile",0,980,0.9693877551020408
+MLP,"Horizontal profile,Vertical profile",9,1009,0.9177403369672944
+MLP,"Horizontal profile,Vertical profile",4,982,0.9501018329938901
+MLP,"Horizontal profile,Vertical profile",5,892,0.8385650224215246
+MLP,"Horizontal profile,Vertical profile",2,1032,0.9137596899224806
+MLP,"Horizontal profile,Vertical profile",3,1010,0.8683168316831683
+MLP,"Horizontal profile,Vertical profile",6,958,0.9206680584551148
+MLP,"Horizontal profile,Vertical profile",8,974,0.9065708418891171
+MLP,"Horizontal profile,Vertical profile",7,1028,0.9221789883268483
+MLP,"Horizontal profile,Vertical profile",1,1135,0.9762114537444934
+MLP,"Full image",1,1135,0.9911894273127754
+MLP,"Full image",0,980,0.9846938775510204
+MLP,"Full image",4,982,0.9725050916496945
+MLP,"Full image",8,974,0.9630390143737166
+MLP,"Full image",7,1028,0.9708171206225681
+MLP,"Full image",5,892,0.9663677130044843
+MLP,"Full image",6,958,0.9728601252609603
+MLP,"Full image",9,1009,0.9663032705649157
+MLP,"Full image",3,1010,0.9792079207920792
+MLP,"Full image",2,1032,0.9651162790697675
+KNeighbors[k=3],"Horizontal profile,Vertical profile,Full image",8,974,0.9034907597535934
+KNeighbors[k=3],"Horizontal profile,Vertical profile,Full image",3,1010,0.9465346534653465
+KNeighbors[k=3],"Horizontal profile,Vertical profile,Full image",6,958,0.9665970772442589
+KNeighbors[k=3],"Horizontal profile,Vertical profile,Full image",1,1135,0.9947136563876652
+KNeighbors[k=3],"Horizontal profile,Vertical profile,Full image",7,1028,0.9231517509727627
+KNeighbors[k=3],"Horizontal profile,Vertical profile,Full image",5,892,0.922645739910314
+KNeighbors[k=3],"Horizontal profile,Vertical profile,Full image",2,1032,0.9292635658914729
+KNeighbors[k=3],"Horizontal profile,Vertical profile,Full image",0,980,0.9836734693877551
+KNeighbors[k=3],"Horizontal profile,Vertical profile,Full image",9,1009,0.9137760158572844
+KNeighbors[k=3],"Horizontal profile,Vertical profile,Full image",4,982,0.9409368635437881
+KNeighbors[k=5],"Horizontal profile,Vertical profile,Full image",0,980,0.9836734693877551
+KNeighbors[k=5],"Horizontal profile,Vertical profile,Full image",2,1032,0.9234496124031008
+KNeighbors[k=5],"Horizontal profile,Vertical profile,Full image",9,1009,0.9098116947472745
+KNeighbors[k=5],"Horizontal profile,Vertical profile,Full image",6,958,0.9728601252609603
+KNeighbors[k=5],"Horizontal profile,Vertical profile,Full image",8,974,0.9065708418891171
+KNeighbors[k=5],"Horizontal profile,Vertical profile,Full image",5,892,0.9271300448430493
+KNeighbors[k=5],"Horizontal profile,Vertical profile,Full image",1,1135,0.9938325991189427
+KNeighbors[k=5],"Horizontal profile,Vertical profile,Full image",7,1028,0.9241245136186771
+KNeighbors[k=5],"Horizontal profile,Vertical profile,Full image",4,982,0.9358452138492872
+KNeighbors[k=5],"Horizontal profile,Vertical profile,Full image",3,1010,0.9584158415841584
