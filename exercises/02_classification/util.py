@@ -37,13 +37,14 @@ def _train_data(classes, limit=None):
         for img in _images_from_directory(path, limit):
             yield (img, cls)
 
-# Generator yielding training data for a given class
-def _test_data(cls, limit=None):
-    debug("Loading testing data for class: {}".format(cls))
-    path = Path(DATA_ROOT, TEST_DIR, cls)
+# Generator yielding training data
+def _test_data(classes, limit=None):
+    for cls in classes:
+        debug("Loading testing data for class: {}".format(cls))
+        path = Path(DATA_ROOT, TEST_DIR, cls)
 
-    for img in _images_from_directory(path, limit):
-        yield img, cls
+        for img in _images_from_directory(path, limit):
+            yield img, cls
 
 # Generator yielding grayscale images (as numpy arrays) from the specified directory.
 def _images_from_directory(path, limit=None):

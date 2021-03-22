@@ -5,7 +5,9 @@ import util
 class Classifier:
     def __init__(self, classes, max_sample_count, features, decision_mode):
         self.classes = classes
-        self.max_sample_count = max_sample_count
+        # We'll evenly split the sample space between the classes. Not ideal
+        # but cba to fix below.
+        self.max_sample_count = max_sample_count / len(classes)
 
         self.features = features
 

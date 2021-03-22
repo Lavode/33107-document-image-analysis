@@ -24,12 +24,12 @@ CLASSES = set(
         ]
 )
 
-# Upper limit to preallocate sample arrays. Will be truncated in the end.
-# This is the limit *PER CLASS*
-TRAINING_DATA_COUNT = 6000
+# Limit of samples we'll allow for training. Required to preallocate arrays for
+# sample storage.
+TRAINING_SAMPLES_LIMIT = 60000
 # Optional limit on how much training data to consume *per class*. Set to
 # `None` to disable.
-MAX_SAMPLE_COUNT_PER_CLASS = None
+MAX_SAMPLE_COUNT_PER_CLASS = 100
 
 
 def main():
@@ -71,6 +71,7 @@ def main():
     # _custom_classifier(features)
     _scikit_classifiers(features)
 
+# Evaluate various Scikit classifiers with MNIST data
 def _scikit_classifiers(features):
     # - Fix random seed
     # - Increase iterations such that it converges
@@ -91,6 +92,7 @@ def _scikit_classifiers(features):
     #     print("{},\"{}\",{},{},{}".format(clsf.decision_mode, feature_id, cls, stats[cls]['total'], stats[cls]['accuracy']))
 
 
+# Train given Scikit classifier
 def _train_scikit_classifier(clsf, features):
     x, y = _get_scikit_training_data(features)
     print("Dimensions of X: {}".format(x.shape))
@@ -99,6 +101,7 @@ def _train_scikit_classifier(clsf, features):
     print("Training LinearSVC")
     clsf.fit(x, y)
 
+# Test accuracy of given Scikit classifier
 def _test_scikit_classifier(clsf, features):
     print("Testing LinearSVC")
     xtest, ytest = _get_scikit_testing_data(features)
@@ -126,43 +129,32 @@ def _test_scikit_classifier(clsf, features):
 
     return stats
 
-# TODO: DRY testing/training loading
+# Get testing data suitable for use with Scikit.
 def _get_scikit_testing_data(features):
-    # Length of feature vector
-    feature_length =_scikit_feature_length(features)
+    return _get_scikit_data(features, TRAINING_SAMPLES_LIMIT, util._test_data, [CLASSES])
 
-    x, y = _scikit_xy(len(CLASSES), TRAINING_DATA_COUNT, feature_length)
-
-    sample_idx = 0
-
-    for cls in CLASSES:
-        for img_pixels, _ in util._test_data(cls):
-            x[sample_idx] = _scikit_features(img_pixels, features, feature_length)
-            y[sample_idx] = int(cls)
-
-            sample_idx += 1
-
-    # sample_idx is now the *count* of actual samples, so we can use it to truncate x and y
-    x = x[ : sample_idx]
-    y = y[ : sample_idx]
-
-    # Finally we'll normalize mean and variance
-    print("Normalizing data")
-    scaler = StandardScaler()
-    scaler.fit(x)
-    x = scaler.transform(x)
-
-    return x, y
-
+# Get training data suitable for use with Scikit
 def _get_scikit_training_data(features):
+    return _get_scikit_data(features, TRAINING_SAMPLES_LIMIT, util._train_data, [CLASSES, MAX_SAMPLE_COUNT_PER_CLASS])
+
+# Retrieves data from data-providing function, then preprocesses & stores it in
+# a way that it can be used with Scikit classifiers.
+#
+# This involves:
+# - Storing as X = (n_sample, n_feature), Y = (n_feature) sample and label vectors
+# - Normalizing sample data
+def _get_scikit_data(features, sample_limit, get_data_func, get_data_args):
     # Length of feature vector
     feature_length =_scikit_feature_length(features)
 
-    x, y = _scikit_xy(len(CLASSES), TRAINING_DATA_COUNT, feature_length)
+    class_count = len(CLASSES)
+
+    x = np.zeros((sample_limit, feature_length))
+    y = np.zeros(sample_limit)
 
     sample_idx = 0
 
-    for img_pixels, cls in util._train_data(CLASSES, MAX_SAMPLE_COUNT_PER_CLASS):
+    for img_pixels, cls in get_data_func(*get_data_args):
         x[sample_idx] = _scikit_features(img_pixels, features, feature_length)
         y[sample_idx] = int(cls)
 
@@ -177,15 +169,6 @@ def _get_scikit_training_data(features):
     scaler = StandardScaler()
     scaler.fit(x)
     x = scaler.transform(x)
-
-    return x, y
-
-def _scikit_xy(class_count, sample_data_limit, feature_length):
-    # Upper limit of samples we'll support, required to preallocate storage
-    sample_limit = class_count * sample_data_limit
-
-    x = np.zeros((sample_limit, feature_length))
-    y = np.zeros(sample_limit)
 
     return x, y
 
@@ -215,9 +198,9 @@ def _scikit_feature_length(features):
     return length
 
 
-# Train & test own classifier with MNIST data
+# Evaluate own classifier with MNIST data
 def _custom_classifier(features):
-    clsf = classifier.Classifier(CLASSES, TRAINING_DATA_COUNT, features, 'avg')
+    clsf = classifier.Classifier(CLASSES, TRAINING_SAMPLES_LIMIT, features, 'avg')
 
     _train_classifier_from_data(clsf)
     clsf.finalize()
@@ -241,16 +224,16 @@ def _test_custom_classifier(classifier):
     for cls in CLASSES:
         stats[cls] = { 'total': 0, 'correct': 0, 'incorrect': 0 }
 
-        # We'll throw away the class it yields
-        for img_pixels, _ in util._test_data(cls):
-            classification, score = classifier.test(img_pixels)
-            # util.debug("Actual: {}, Classification: {}, Score: {}".format(cls, classification, score))
+    # We'll throw away the class it yields
+    for img_pixels, cls in util._test_data(CLASSES):
+        classification, score = classifier.test(img_pixels)
+        # util.debug("Actual: {}, Classification: {}, Score: {}".format(cls, classification, score))
 
-            stats[cls]['total'] += 1
-            if classification == cls:
-                stats[cls]['correct'] += 1
-            else:
-                stats[cls]['incorrect'] += 1
+        stats[cls]['total'] += 1
+        if classification == cls:
+            stats[cls]['correct'] += 1
+        else:
+            stats[cls]['incorrect'] += 1
 
     for cls in stats:
         stats[cls]['accuracy'] = stats[cls]['correct'] / stats[cls]['total']
