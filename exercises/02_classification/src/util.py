@@ -2,7 +2,7 @@ from pathlib import Path
 
 import cv2
 
-DATA_ROOT = 'mnist'
+DATA_ROOT = '../mnist'
 TEST_DIR = 'test'
 TRAIN_DIR = 'train'
 VALIDATION_DIR = 'val'
