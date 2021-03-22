@@ -292,20 +292,20 @@ vector, of which the euclidean distance is calculated:
   \label{alg:euclidean_distance}
 \end{algo}
 
-\section{Mode of operation}
+\section{Custom classifier}
 
 \begin{itemize}
 		\item In a first step, the classifier is trained on the training set
-				with the set of chosen features. The features of each test
-				image are then combined into one class representative by the
-				mean operation.
+				with the set of chosen features. The features are extracted
+				from each sample, and a class representative calculated as the
+				average feature vector over all samples.
 
-		\item The resulting class representatives are then used to gauge the
-				`distance' of each to-be-classified image from the class
-				representative. With $n$ features and 10 classes this leads to
-				a matrix $(d_{ij})$ of shape $(10, n)$, where $d_{ij}$ is the
-				`distance' of the classified image - in terms of feature $j$ -
-				from class $i$.
+		\item In the testing step, the class representatives are then used to
+				gauge the `distance' of each to-be-classified image from the
+				class representative. With $n$ features and 10 classes this
+				leads to a matrix $(d_{ij})$ of shape $(10, n)$, where $d_{ij}$
+				is the `distance' of the classified image - in terms of feature
+				$j$ - from class $i$.
 
 		\item These are then combined into one distance per class by either the
 				mean, or the minimum, operation.
@@ -322,7 +322,7 @@ A more elaborate approach would be to have each feature report a `certainity'
 value per class, of how certain it is that the to-be-classified image belongs
 to this class.
 
-\section{Results}
+\section{Results with custom classifier}
 
 \subsection{Single features}
 
@@ -341,7 +341,7 @@ single digit.
 
 \begin{figure}[h]
         \centering
-		\includegraphics[width=0.8\textwidth]{resources/features_single.png}
+		\includegraphics[width=0.8\textwidth]{../resources/features_single.png}
 		\caption{Evaluation of single features}
 		\label{fig:evaluation_single}
 \end{figure}
@@ -360,7 +360,7 @@ performed consistently worse.
 
 \begin{figure}[h]
         \centering
-		\includegraphics[width=0.8\textwidth]{resources/features_profiles.png}
+		\includegraphics[width=0.8\textwidth]{../resources/features_profiles.png}
 		\caption{Evaluation of horizontal \& vertical profile combinations}
 		\label{fig:evaluation_profiles}
 \end{figure}
@@ -380,7 +380,7 @@ nearly as good as - but always a bit worse than - the euclidean distance alone.
 
 \begin{figure}[h]
         \centering
-		\includegraphics[width=0.8\textwidth]{resources/features_top.png}
+		\includegraphics[width=0.8\textwidth]{../resources/features_top.png}
 		\caption{Evaluation of top combinations}
 		\label{fig:evaluation_top}
 \end{figure}
@@ -410,5 +410,150 @@ distance.
 		\label{tbl:evaluation}
 		\caption{Feature statistics}
 \end{table}
+
+\section{Results with scikit-learn classifiers}
+
+In a last step, some feature sets were tested in combination with standard
+classifiers offered by the scikit-learn library. The following classifiers were
+evaluated:
+
+\begin{itemize}
+		\item K-Neighbors classifier
+		\item Linear SVC
+		\item Multi-layer perceptron classifier
+\end{itemize}
+
+In combination with the following feature sets:
+
+\begin{itemize}
+		\item Horizontal \& vertical profile
+		\item Raw pixel values
+		\item Horizontal \& vertical profile \& raw pixel values
+\end{itemize}
+
+Only feature sets which had performed well with the custom classifier were
+considered, to not bloat this any more.
+
+The combination of all three features was not tested with the K-Neighbors
+classifier, due to training times exceeding half an hour.
+
+\subsection{Standardization}
+
+Both training as well as test data was standardized, that is transformed such
+that its mean was $0$ and its variance $1$. This is required for proper
+training with some models such as support-vector classifiers, and does not hurt
+accuracy with other classifiers.
+
+\subsection{Runtime}
+
+\subsubsection{Feature extraction}
+
+Runtime for feature extraction is independent from the choice of classifier,
+and as such was the same for all. Feature extraction took an average of
+\SI{3.5}{\s}, though this also involved disk access which is likely to have
+dominated the metric.
+
+\subsubsection{Training the classifier}
+
+The runtime to train the various classifiers on the full training set of 48000
+samples is shown in figure \ref{fig:training_time}.
+
+Training the K-Neighbors classifier took only fractions of a second which is to
+be expected, as its training phase merely consists of storing the training
+data. Training time of the linear SVC was highly dependant on the number of
+features, with training on the full pixel data taking roughly half an hour.
+Training the MLP was largely independant of the number of features, taking
+around \SI{100}{\s} consistently.
+
+\begin{figure}[h]
+        \centering
+		\includegraphics[width=0.8\textwidth]{../resources/scikit_training_timings.png}
+		\caption{Training time}
+		\label{fig:training_time}
+\end{figure}
+
+\subsubsection{Prediction}
+
+Figure \ref{fig:prediction_time} shows the average prediction time per test
+sample. The K-neighbors classifier took around \SI{1e-3}{\s} per sample, with
+the linear SVC and MLP classifiers being about three to four orders of
+magnitude faster.
+
+\begin{figure}[h]
+        \centering
+		\includegraphics[width=0.8\textwidth]{../resources/scikit_prediction_timings.png}
+		\caption{Prediction time}
+		\label{fig:prediction_time}
+\end{figure}
+
+\subsection{Prediction accuracy}
+
+Figure \ref{fig:scikit_accuracy} shows prediction accuracies of the evaluated
+classifiers and feature sets. Generally the MLP classifier performed the best
+and the linear SVC the worst, with the K-Neighbors classifier performing
+independent of the number of neighbors to consider.
+
+As with the custom classifier from the first part of the exercise, providing
+the classifiers the full set of pixels to work with - rather than aggregations
+in the form of the horizontal and vertical profiles - resulted in the highest
+accuracies. As with the custom classifier, providing the profiles in addition
+to the full image data did not improve accuracy, and sometimes even lowered it.
+
+It should also be noted that - even with only the horizontal and vertical
+profiles available - these classifiers achieved mean accuracies of
+\SIrange{75}{91}{\percent}, significantly outperforming the \SI{64}{\percent}
+accuracy of the custom classifier.
+
+Table \ref{tbl:scikit_accuracy} finally lists average, minimum and maximum
+accuracy of each classifier and feature set.
+
+\begin{figure}[h]
+        \centering
+		\includegraphics[width=\textwidth]{../resources/scikit_overview.png}
+		\caption{Prediction accuracy}
+		\label{fig:scikit_accuracy}
+\end{figure}
+
+\begin{table}
+		\begin{tabular}{lllll}
+				\toprule
+				Classifier & Features & Average & Worst & Best \\
+				\midrule
+				K-Neighbours ($K = 3$) & Full image & \SI{94}{\percent} & \SI{90}{\percent} & \SI{99}{\percent} \\
+				K-Neighbours ($K = 3$) & Horizontal \& vertical profile & \SI{87}{\percent} & \SI{66}{\percent} & \SI{99}{\percent} \\
+				K-Neighbours ($K = 3$) & Horizontal \& vertical profile \& full image & \SI{94}{\percent} & \SI{90}{\percent} & \SI{99}{\percent} \\
+				K-Neighbours ($K = 5$) & Full image & \SI{94}{\percent} & \SI{90}{\percent} & \SI{99}{\percent} \\
+				K-Neighbours ($K = 5$) & Horizontal \& vertical profile & \SI{87}{\percent} & \SI{66}{\percent} & \SI{99}{\percent} \\
+				K-Neighbours ($K = 5$) & Horizontal \& vertical profile \& full image & \SI{94}{\percent} & \SI{90}{\percent} & \SI{99}{\percent} \\
+				Linear SVC & Full image & \SI{91}{\percent} & \SI{85}{\percent} & \SI{98}{\percent} \\
+				Linear SVC & Horizontal \& vertical profile & \SI{76}{\percent} & \SI{48}{\percent} & \SI{92}{\percent} \\
+				MLP & Full image & \SI{97}{\percent} & \SI{96}{\percent} & \SI{99}{\percent} \\
+				MLP & Horizontal \& vertical profile & \SI{92}{\percent} & \SI{84}{\percent} & \SI{98}{\percent} \\
+				MLP & Horizontal \& vertical profile \& Full image & \SI{96}{\percent} & \SI{94}{\percent} & \SI{98}{\percent} \\
+				\bottomrule
+		\end{tabular}
+		\label{tbl:evaluation}
+		\caption{Feature statistics}
+\end{table}
+
+\section{Conclusion}
+
+This has shown that, even with very basic features and a naive classifier,
+accuracy suitable for at least supporting a human operator can be achieved.
+Using actual industry-standard classifiers then provides prediction accuracy
+approaching levels which can be acceptable for unsupervised operation.
+
+It was shown to be beneficial to provide the classifiers access to the full
+image data rather than to aggregations if training time permits.
+
+Classifiers such as MLP have been shown to be performant enough that training
+on a large set can be done in a reasonable time on modern hardware, while
+simultaneously having good prediction accuracy.
+
+Prediction time has been low enough for all classifiers that it is of no
+concern.
+
+It is likely that prediction accuracy can be further improved by tuning model
+parameters, and suitably preprocessing data.
 
 \end{document}

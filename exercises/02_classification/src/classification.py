@@ -47,22 +47,22 @@ def main():
             #     'dim': (1,),
             #     'type': np.float64,
             # },
-            # {
-            #     'id': 'horizontal_profile',
-            #     'name': "Horizontal profile",
-            #     'f': f.extract_horizontal_profile,
-            #     'f_compare': f.compare_profiles,
-            #     'dim': (28,),
-            #     'type': np.uint8,
-            # },
-            # {
-            #     'id': 'vertical_profile',
-            #     'name': "Vertical profile",
-            #     'f': f.extract_vertical_profile,
-            #     'f_compare': f.compare_profiles,
-            #     'dim': (28,),
-            #     'type': np.uint8,
-            # },
+            {
+                'id': 'horizontal_profile',
+                'name': "Horizontal profile",
+                'f': f.extract_horizontal_profile,
+                'f_compare': f.compare_profiles,
+                'dim': (28,),
+                'type': np.uint8,
+            },
+            {
+                'id': 'vertical_profile',
+                'name': "Vertical profile",
+                'f': f.extract_vertical_profile,
+                'f_compare': f.compare_profiles,
+                'dim': (28,),
+                'type': np.uint8,
+            },
             {
                 'id': 'euclidean_distance',
                 'name': 'Euclidean distance',
@@ -85,12 +85,12 @@ def _scikit_classifiers(features):
     # classifier_type = 'LinearSVC'
 
     # - Set neighbour count for nn search
-    clsf = KNeighborsClassifier(n_neighbors=5)
-    classifier_type = 'KNeighbors[k=5]'
+    # clsf = KNeighborsClassifier(n_neighbors=5)
+    # classifier_type = 'KNeighbors[k=5]'
 
     # - Fix random seed
-    # clsf = MLPClassifier(random_state=42)
-    # classifier_type = 'MLP'
+    clsf = MLPClassifier(random_state=42)
+    classifier_type = 'MLP'
 
     extraction_time, training_time, sample_count = _train_scikit_classifier(clsf, features)
 

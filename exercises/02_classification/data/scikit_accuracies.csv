@@ -99,3 +99,13 @@ KNeighbors[k=5],"Horizontal profile,Vertical profile,Full image",1,1135,0.993832
 KNeighbors[k=5],"Horizontal profile,Vertical profile,Full image",7,1028,0.9241245136186771
 KNeighbors[k=5],"Horizontal profile,Vertical profile,Full image",4,982,0.9358452138492872
 KNeighbors[k=5],"Horizontal profile,Vertical profile,Full image",3,1010,0.9584158415841584
+MLP,"Horizontal profile,Vertical profile,Full image",5,892,0.9540358744394619
+MLP,"Horizontal profile,Vertical profile,Full image",9,1009,0.9573835480673935
+MLP,"Horizontal profile,Vertical profile,Full image",2,1032,0.9496124031007752
+MLP,"Horizontal profile,Vertical profile,Full image",0,980,0.9693877551020408
+MLP,"Horizontal profile,Vertical profile,Full image",4,982,0.955193482688391
+MLP,"Horizontal profile,Vertical profile,Full image",1,1135,0.9841409691629956
+MLP,"Horizontal profile,Vertical profile,Full image",8,974,0.9414784394250514
+MLP,"Horizontal profile,Vertical profile,Full image",6,958,0.9697286012526096
+MLP,"Horizontal profile,Vertical profile,Full image",7,1028,0.9669260700389105
+MLP,"Horizontal profile,Vertical profile,Full image",3,1010,0.9673267326732673

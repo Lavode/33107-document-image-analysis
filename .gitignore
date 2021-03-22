@@ -2,3 +2,6 @@ mnist/
 MNIST.zip
 exercises/**/*.pdf
 .Rproj.user
+series.log
+slides/*.pdf
+exercises/01_image_manipulation/images/
