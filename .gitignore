@@ -5,3 +5,6 @@ exercises/**/*.pdf
 series.log
 slides/*.pdf
 exercises/01_image_manipulation/images/
+
+summary/**/*.log
+summary/**/*.pdf
