@@ -1,0 +1,103 @@
+\section{Pattern recognition}
+
+Goal: Discover and identify patterns in raw data. A way of reducing information
+to find relevant meaning.
+
+Two categories:
+
+\begin{description}
+		\item[Regression] Linear or non-linear. Predict one variable based on
+				another, e.g. book price based on page count
+		\item[Classification] Multi-class / multi-label classification.
+				Classify sample based on variables.
+\end{description}
+
+Often operates in two stages:
+
+\begin{description}
+		\item[Feature extraction] Remove redundancy, pull out relevant information
+		\item[Classification] Make decision based on extracted features
+\end{description}
+
+Main issue: Variability of data. E.g. not all letter 'g's look the same.
+
+\subsection{Methods}
+
+\begin{description}
+		\item[Statistical] Quantitative approach, appropriate for basic
+				objects. Boils down to an optimization problem, sensitive to
+				noise.
+		\item[Structural] Qualitative approach, appropriate for compound
+				objects. Boils down to validation of properties, insensitive to
+				noise (binary operation, works fully or not at all).
+\end{description}
+
+\subsection{Classifiers}
+
+\begin{itemize}
+		\item Model trained by features from training data
+		\item Then able to classify data
+		\item Supervised (labelled) vs unsupervised (unlabelled, model learns classes itself)
+\end{itemize}
+
+\subsection{Feature extraction}
+
+\begin{itemize}
+		\item Traditional setups extract features by handcrafted algorithms
+		\item Chosen to be discriminative between classes and robust, fast to
+				calculate and reasonably compact.
+		\item In deep learning, tendency is to avoid handcrafted features
+\end{itemize}
+
+Possible features for document image analysis:
+\begin{itemize}
+		\item Global features such as dimensions, center of gravity, ..
+		\item HOG, profiles, LBP
+		\item Shape context
+		\item ...
+\end{itemize}
+
+\subsection{Bayesian}
+
+\begin{itemize}
+		\item Given a priori probabilities, determine class with maximum a
+				posteriori probability.
+		\item Optimal decision boundary minimizes reducible error.
+\end{itemize}
+
+\begin{align*}
+		P(\omega_i | x) & = \frac{p(x | \omega_i) \cdot P(\omega_i)}{p(x)} \\
+		p(x) & = \sum_j p(x | \omega_j) \cdot P(\omega_j)
+\end{align*}
+
+\subsection{Classification approaches}
+
+\begin{description}
+		\item[Generative] Based on class conditional probabilities (?)
+		\item[Discriminative] Based on decision boundaries
+\end{description}
+
+\begin{itemize}
+		\item Discriminant functions can be used to drive decision, such that
+				decision is the one where the corresponding discriminant
+				function is the largest of all.
+		\item Discriminant function $g$ can be replaced by $f \cdot g$ for any
+				monotonic function $f$ (if applied to all discriminant
+				functions)
+		\item In two-class case, $g_1, g_2$ discriminant functions can be
+				combined into $g = g_1 - g_2$, with the decision criteria then
+				being $\delta_1 \Leftrightarrow g > 0$.
+\end{itemize}
+
+\subsection{Evaluation}
+
+Sound methodology required, management of dataset and clearly specified
+metrics. Reproducable execution, control of non-deterministic elements.
+
+\begin{description}
+		\item[Accuracy] Global accuracy can be meaningless if unbalanced
+				classes, as those have little impact
+		\item[Confusion matrices]
+		\item[Precision, recall] for two-class problems. $Prec = TP / (TP +
+				FP)$, $Rec = TP / (TP + FN)$.
+\end{description}
