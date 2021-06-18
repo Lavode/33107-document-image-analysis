@@ -24,12 +24,12 @@ binarization, ...
 Isolate text blocks, graphics, formula, images, ...
 
 \begin{itemize}
-		\item White streams detection recursively does horizontal and vertical
+		\item White streams detection (top-down) recursively does horizontal and vertical
 				cuts through white areas. Works well for manhattan layout, less
-				well for nested ones. Top-down.
-		\item Projectino profiles allow detecting columns or lines, requires
-				unskewed image. Top-down.
-		\item Connected components, bottom-up aggregation of connected
+				well for nested ones.
+		\item Projection profiles (top-down) allow detecting columns or lines, requires
+				unskewed image.
+		\item Connected components (bottom-up), aggregation of connected
 				components. Useful for binarized printed documents.
 		\item Regional classification in e.g. historical documents.
 \end{itemize}

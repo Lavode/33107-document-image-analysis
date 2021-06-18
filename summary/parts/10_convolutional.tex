@@ -1,0 +1,69 @@
+\section{Convolutional neural networks}
+
+Computer vision applied to images (stationary or dynamic), with the goal of
+classifying images, detectinb objects and their locations, making predictions,
+etc.
+
+Traditional approaches use feature extraction and decision. Issues:
+\begin{itemize}
+		\item Finding suitable features (suitable for a machine!) is hard
+		\item Highly variable data
+\end{itemize}
+
+Using fully connected neural networks:
+\begin{itemize}
+		\item Input is 2D image with spatial information
+		\item But fully connected network has every neuron in hidden network
+				connected to every neuron in input. Spatial information is
+				lost.
+		\item And a lot of parameters
+\end{itemize}
+
+Approach: Feature extraction with convolution.
+
+\subsection{CNNs for classification}
+
+\begin{enumerate}
+		\item Apply convolution filters to generate feature maps
+		\item Introduce non-linearity, often with ReLU
+		\item Pooling: Downsampling on each feature map
+\end{enumerate}
+
+Specifically, each neuron gets only a $x \times y$ window as input.
+
+\subsubsection{Pooling}
+
+Max pool $\max()$ over each pool allows focusing on `positive' aspects of
+features.
+
+\subsubsection{Chaining}
+
+Can be chained.
+
+\begin{itemize}
+		\item Repeatedly extract features via convolution, activate via ReLU, pooling
+		\item Then, flatten feature vectors and feed into fully-connected layer
+				for classification
+		\item Output is probability of image belonging to a particular class.
+\end{itemize}
+
+\subsubsection{R-CNN}
+
+Problem of naive usage of CNNs for object detection: CNN is going to find way
+too many objects in each image. Solution: Object detection with R-CNN.
+
+\begin{itemize}
+		\item R-CNN algorithm finds regions which might have objects
+		\item CNN used on those regions (warped to required dimensions) to find
+				and classify objects.
+\end{itemize}
+
+\subsection{Semantic segmentation: Fully convolutional network}
+
+\begin{itemize}
+		\item FCN is CNN designed with all convolutional layers, including
+				downsampling (beginning) and upsampling (end) operations
+		\item Model is E2E-trained without human labelling
+		\item Pre-trained models can be distributed, requiring only fine-tuning
+				with application-specific data.
+\end{itemize}
